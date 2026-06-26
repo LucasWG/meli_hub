@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         MELI HUB - Gerenciador de Scripts
 // @namespace    https://github.com/LucasRepML/meli_hub
-// @version      3.1.0
-// @description  Hub profissional para plugins do repositório meli_hub (Estilo ML, Suporte SPA e CSP Bypass)
+// @version      3.2.0
+// @description  Hub profissional para plugins do repositório meli_hub (Estilo ML, Suporte SPA, CSP Bypass e Anti-Cache)
 // @author       Você
 // @match        *://*/*
 // @grant        GM_setValue
@@ -26,7 +26,7 @@
 	const CACHE_PREFIX = 'plugin_cache_';
 	const META_PREFIX = 'plugin_meta_';
 
-	// ===== ESTILOS GLOBAIS (UI v3.1.0 - Tema Mercado Livre) =====
+	// ===== ESTILOS GLOBAIS (UI v3.2.0 - Tema Mercado Livre) =====
 	GM_addStyle(`
         /* ========== TIPOGRAFIA E VARIAVEIS ========== */
         :root {
@@ -266,11 +266,21 @@
 		}
 	}
 
+	// ===== ANTI-CACHE FETCH =====
 	function gmFetch(url) {
+		// Cache Buster: Adiciona um timestamp na URL para forçar o CDN do GitHub e o navegador a baixar a versão mais recente
+		const cacheBusterUrl = url + (url.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+
 		return new Promise((resolve, reject) => {
 			GM_xmlhttpRequest({
 				method: 'GET',
-				url: url,
+				url: cacheBusterUrl,
+				nocache: true, // Diretiva nativa do Tampermonkey
+				headers: {
+					'Cache-Control': 'no-cache, no-store, must-revalidate',
+					'Pragma': 'no-cache',
+					'Expires': '0'
+				},
 				onload: (res) => {
 					if (res.status >= 200 && res.status < 300) resolve(res.responseText);
 					else reject(new Error(`HTTP ${res.status}`));
@@ -379,7 +389,6 @@
 				}
 			}
 		}
-		// Nota: Removido o toast automático no carregamento inicial da página
 	}
 
 	// ===== UI BUILDING =====
@@ -484,7 +493,7 @@
                 <div class="meli-hub-header">
                     <h2>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                        MELI HUB <span class="meli-hub-version">v3.1.0</span>
+                        MELI HUB <span class="meli-hub-version">v3.2.0</span>
                     </h2>
                     <button class="close-btn" id="meli-hub-close" title="Fechar (ESC)">✕</button>
                 </div>
