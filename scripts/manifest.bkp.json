@@ -1,0 +1,44 @@
+[
+	{
+		"id": "qr_printer",
+		"name": "QR Code Printer - Package ID",
+		"description": "Atalhos de Impressão: Alt+P imprime pelo sistema; Alt+I seleciona impressora local.",
+		"version": "2.2.0",
+		"file": "qr_printer.js"
+	},
+	// {
+	// 	"id": "mt_toolbar",
+	// 	"name": "Barra de Ferramentas & Cópia Inteligente",
+	// 	"description": "Adiciona botões de cópia ao lado dos IDs e barra inferior com atalhos para Backoffice.",
+	// 	"version": "1.0.0",
+	// 	"file": "mt_toolbar.js"
+	// },
+	{
+		"id": "mt_quick_nav",
+		"name": "Navegação Rápida (Teclado)",
+		"description": "Digite 11 números em qualquer lugar da tela ou cole (Ctrl+V) um ID para navegar instantaneamente.",
+		"version": "1.0.0",
+		"file": "mt_quick_nav.js"
+	},
+	// {
+	// 	"id": "mt_batch",
+	// 	"name": "Processamento em Lote (Alt+Q)",
+	// 	"description": "Acesse via Alt+Q. Permite colar dezenas de pacotes para alterar ou verificar status de forma automática.",
+	// 	"version": "1.0.0",
+	// 	"file": "mt_batch_processor.js"
+	// },
+	// {
+	// 	"id": "mt_stealth",
+	// 	"name": "Modo Furtivo (Alt+F)",
+	// 	"description": "Aperte Alt+F para esconder instantaneamente todas as interfaces dos plugins ativos da tela.",
+	// 	"version": "1.0.0",
+	// 	"file": "mt_stealth.js"
+	// },
+	{
+		"id": "mlm_multi",
+		"name": "Monitor Last Mile - Multi Estações",
+		"description": "Painel avançado para monitoramento simultâneo de múltiplas estações, rotas, insucessos, PNR e devoluções.",
+		"version": "1.1.0",
+		"file": "mlm_multi.js"
+	}
+]
