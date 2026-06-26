@@ -1,11 +1,10 @@
 // ==UserScript==
 // @name         MELI HUB - Gerenciador de Scripts
 // @namespace    https://github.com/LucasRepML/meli_hub
-// @version      3.0.0
-// @description  Hub profissional para plugins do repositório meli_hub (Suporte SPA e CSP Bypass)
-// @author       LucasWG
-// @match        https://envios.adminml.com/*
-// @match        https://shipping-bo.adminml.com/*
+// @version      3.1.0
+// @description  Hub profissional para plugins do repositório meli_hub (Estilo ML, Suporte SPA e CSP Bypass)
+// @author       Você
+// @match        *://*/*
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_addStyle
@@ -27,61 +26,29 @@
 	const CACHE_PREFIX = 'plugin_cache_';
 	const META_PREFIX = 'plugin_meta_';
 
-	// ===== ESTILOS GLOBAIS (UI v3.0.0) =====
+	// ===== ESTILOS GLOBAIS (UI v3.1.0 - Tema Mercado Livre) =====
 	GM_addStyle(`
-        /* ========== BOTÃO FLUTUANTE ========== */
-        #meli-hub-btn {
-            position: fixed;
-            bottom: 28px;
-            right: 28px;
-            z-index: 999999;
-            background: rgba(30,30,46,0.85);
-            color: #cdd6f4;
-            border: none;
-            border-radius: 14px;
-            width: 48px;
-            height: 48px;
-            font-size: 20px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4), 0 0 0 1px rgba(205,214,244,0.1);
-            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px);
-        }
-        #meli-hub-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.5), 0 0 0 2px #89b4fa;
-            background: rgba(49,50,68,0.95);
-        }
-        #meli-hub-btn:active {
-            transform: scale(0.95);
-        }
-        #meli-hub-btn .badge {
-            position: absolute;
-            top: -6px;
-            right: -6px;
-            background: #a6e3a1;
-            color: #1e1e2e;
-            font-size: 11px;
-            font-weight: bold;
-            min-width: 18px;
-            height: 18px;
-            border-radius: 9px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            border: 2px solid #1e1e2e;
+        /* ========== TIPOGRAFIA E VARIAVEIS ========== */
+        :root {
+            --ml-yellow: #FFE600;
+            --ml-blue: #3483FA;
+            --ml-blue-hover: #2968c8;
+            --ml-green: #00A650;
+            --ml-red: #F23D4F;
+            --ml-bg: #EBEBEB;
+            --ml-white: #FFFFFF;
+            --ml-text-main: #333333;
+            --ml-text-muted: #666666;
+            --ml-text-light: #999999;
+            --ml-border: #E6E6E6;
+            --ml-font: 'Proxima Nova', -apple-system, 'Helvetica Neue', Helvetica, Roboto, Arial, sans-serif;
         }
 
         /* ========== TOASTS ========== */
         #meli-toast-container {
             position: fixed;
-            bottom: 90px;
-            right: 28px;
+            bottom: 24px;
+            right: 24px;
             z-index: 1000001;
             display: flex;
             flex-direction: column-reverse;
@@ -89,25 +56,27 @@
             pointer-events: none;
         }
         .meli-toast {
-            background: rgba(49,50,68,0.92);
-            color: #cdd6f4;
-            border-left: 4px solid #89b4fa;
-            padding: 12px 16px;
-            border-radius: 8px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            font-size: 13px;
-            min-width: 240px;
+            background: var(--ml-white);
+            color: var(--ml-text-main);
+            border-left: 4px solid var(--ml-blue);
+            padding: 14px 18px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-family: var(--ml-font);
+            font-size: 14px;
+            min-width: 260px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            backdrop-filter: blur(12px);
+            gap: 12px;
             animation: meli-slideIn 0.3s ease-out;
+            border-top: 1px solid var(--ml-border);
+            border-right: 1px solid var(--ml-border);
+            border-bottom: 1px solid var(--ml-border);
         }
-        .meli-toast.success { border-left-color: #a6e3a1; }
-        .meli-toast.error   { border-left-color: #f38ba8; }
-        .meli-toast.info    { border-left-color: #89dceb; }
-        .meli-toast-icon { font-size: 16px; flex-shrink: 0; }
+        .meli-toast.success { border-left-color: var(--ml-green); }
+        .meli-toast.error   { border-left-color: var(--ml-red); }
+        .meli-toast.info    { border-left-color: var(--ml-blue); }
+        .meli-toast-icon { font-size: 18px; flex-shrink: 0; }
         @keyframes meli-slideIn {
             from { opacity: 0; transform: translateX(40px); }
             to { opacity: 1; transform: translateX(0); }
@@ -122,8 +91,7 @@
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.65);
-            backdrop-filter: blur(6px);
+            background: rgba(0,0,0,0.5);
             z-index: 1000000;
             justify-content: center;
             align-items: center;
@@ -133,105 +101,127 @@
         @keyframes meli-fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .meli-hub-content {
-            background: #1e1e2e;
-            border-radius: 14px;
+            background: var(--ml-bg);
+            border-radius: 8px;
             display: flex;
             flex-direction: column;
             width: 92%;
-            max-width: 520px;
-            max-height: 80vh;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 0 1px rgba(205,214,244,0.08);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            color: #cdd6f4;
-            position: relative;
+            max-width: 600px;
+            max-height: 85vh;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            font-family: var(--ml-font);
+            color: var(--ml-text-main);
+            overflow: hidden;
         }
 
         /* Modal Header */
         .meli-hub-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid #313244;
+            background: var(--ml-yellow);
+            padding: 16px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         .meli-hub-header h2 {
             margin: 0; font-size: 20px; font-weight: 600;
-            display: flex; align-items: center; gap: 8px; color: #cdd6f4;
+            display: flex; align-items: center; gap: 8px; color: var(--ml-text-main);
         }
         .meli-hub-version {
-            font-size: 11px; background: #313244; color: #a6adc8;
-            padding: 2px 6px; border-radius: 4px; margin-left: 8px; font-weight: 600;
+            font-size: 12px; background: rgba(0,0,0,0.08); color: var(--ml-text-main);
+            padding: 2px 8px; border-radius: 12px; margin-left: 8px; font-weight: 600;
         }
         .close-btn {
-            background: none; border: none; color: #6c7086; font-size: 18px;
-            cursor: pointer; transition: color 0.2s; padding: 4px;
+            background: none; border: none; color: var(--ml-text-main); font-size: 24px;
+            cursor: pointer; transition: opacity 0.2s; padding: 0; line-height: 1; opacity: 0.6;
         }
-        .close-btn:hover { color: #cdd6f4; }
+        .close-btn:hover { opacity: 1; }
 
         /* Modal Body */
         .meli-hub-body {
-            padding: 20px 24px;
+            padding: 24px;
             overflow-y: auto;
+            background: var(--ml-bg);
             scrollbar-width: thin;
-            scrollbar-color: #45475a #1e1e2e;
+            scrollbar-color: #cccccc transparent;
         }
+        .meli-hub-body::-webkit-scrollbar { width: 6px; }
+        .meli-hub-body::-webkit-scrollbar-thumb { background: #cccccc; border-radius: 4px; }
+
         .meli-hub-subtitle {
-            font-size: 12px; color: #a6adc8; margin-bottom: 16px;
+            font-size: 14px; color: var(--ml-text-muted); margin-bottom: 16px; font-weight: 400;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        /* Plugin List */
+        .plugin-list {
+            display: flex; flex-direction: column; gap: 12px;
         }
         .plugin-item {
+            background: var(--ml-white);
+            border: 1px solid var(--ml-border);
+            border-radius: 6px;
+            padding: 16px;
             display: flex; align-items: center; justify-content: space-between;
-            padding: 12px; border-radius: 8px; border: 1px solid transparent;
-            transition: background 0.2s, border-color 0.2s; margin-bottom: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            transition: box-shadow 0.2s;
         }
-        .plugin-item:hover { background: #181825; border-color: #313244; }
+        .plugin-item:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+        }
         .plugin-info { flex: 1; min-width: 0; }
         .plugin-name {
-            font-weight: 600; font-size: 14px; color: #cdd6f4;
-            display: flex; align-items: center; gap: 8px;
+            font-weight: 600; font-size: 16px; color: var(--ml-text-main);
+            display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
         }
-        .plugin-desc { font-size: 12px; color: #a6adc8; margin-top: 4px; line-height: 1.4; }
+        .plugin-desc { font-size: 13px; color: var(--ml-text-muted); line-height: 1.5; }
         .plugin-meta {
-            display: flex; gap: 12px; margin-top: 6px; font-size: 10px; color: #6c7086;
+            display: flex; gap: 16px; margin-top: 10px; font-size: 12px; color: var(--ml-text-light);
         }
         .plugin-meta span { display: flex; align-items: center; gap: 4px; }
 
-        /* Status Dot */
-        .plugin-status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-        .status-new { background: #89b4fa; }
-        .status-updated { background: #a6e3a1; }
-        .status-pending { background: #f9e2af; }
+        /* Badges de Status */
+        .status-badge {
+            font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; text-transform: uppercase;
+        }
+        .status-new { background: #E1F0FF; color: var(--ml-blue); }
+        .status-updated { background: #E6F7ED; color: var(--ml-green); }
+        .status-pending { background: #FFF0E6; color: #E86000; }
 
-        /* Toggle Switch */
-        .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; margin-left: 16px; }
+        /* Toggle Switch (Meli Style) */
+        .toggle-switch { position: relative; width: 40px; height: 20px; flex-shrink: 0; margin-left: 16px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #45475a; transition: .3s; border-radius: 24px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: #cdd6f4; transition: .3s; border-radius: 50%; }
-        input:checked + .slider { background-color: #89b4fa; }
-        input:checked + .slider:before { transform: translateX(20px); background-color: #1e1e2e; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cccccc; transition: .3s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        input:checked + .slider { background-color: var(--ml-blue); }
+        input:checked + .slider:before { transform: translateX(20px); }
 
         /* Modal Footer */
         .meli-hub-footer {
-            padding: 16px 24px; border-top: 1px solid #313244;
+            background: var(--ml-white);
+            padding: 16px 24px; border-top: 1px solid var(--ml-border);
             display: flex; flex-direction: column; gap: 12px;
         }
         .progress-container {
-            height: 4px; background: #313244; border-radius: 4px; overflow: hidden;
+            height: 4px; background: var(--ml-bg); border-radius: 4px; overflow: hidden;
             display: none;
         }
         .progress-bar {
-            height: 100%; width: 0%; background: linear-gradient(90deg, #89b4fa, #a6e3a1);
+            height: 100%; width: 0%; background: var(--ml-blue);
             transition: width 0.3s ease;
         }
-        .footer-btns { display: flex; gap: 10px; }
+        .footer-btns { display: flex; gap: 12px; }
         .footer-btns button {
-            flex: 1; padding: 10px; border: none; border-radius: 8px;
-            background: #313244; color: #cdd6f4; font-weight: 500; font-size: 13px;
-            cursor: pointer; transition: background 0.2s, transform 0.1s;
+            flex: 1; padding: 12px; border: none; border-radius: 6px;
+            font-family: var(--ml-font); font-weight: 600; font-size: 14px;
+            cursor: pointer; transition: background 0.2s, color 0.2s;
         }
-        .footer-btns button:hover { background: #45475a; }
-        .footer-btns button:active { transform: scale(0.97); }
-        .footer-btns button.primary { background: #89b4fa; color: #1e1e2e; font-weight: 600; }
-        .footer-btns button.primary:hover { background: #b4d0fb; }
+        .footer-btns button.secondary {
+            background: rgba(65,137,230,.15); color: var(--ml-blue);
+        }
+        .footer-btns button.secondary:hover { background: rgba(65,137,230,.2); }
+
+        .footer-btns button.primary { background: var(--ml-blue); color: var(--ml-white); }
+        .footer-btns button.primary:hover { background: var(--ml-blue-hover); }
     `);
 
 	// ===== ESTADO GLOBAL =====
@@ -240,7 +230,7 @@
 	let pluginsMeta = GM_getValue('pluginsMeta', {});
 
 	// ===== UTILITÁRIOS =====
-	function showToast(message, type = 'info', duration = 3000) {
+	function showToast(message, type = 'info', duration = 3500) {
 		const container = document.getElementById('meli-toast-container');
 		if (!container) return;
 
@@ -276,7 +266,6 @@
 		}
 	}
 
-	// Requisições bypass CSP (Substitui o fetch nativo)
 	function gmFetch(url) {
 		return new Promise((resolve, reject) => {
 			GM_xmlhttpRequest({
@@ -294,7 +283,6 @@
 
 	// ===== SPA ROUTE INTERCEPTOR =====
 	function injectRouteInterceptor() {
-		// Injeta no contexto da página para monitorar mudanças de rota em SPAs React (como envios.adminml.com)
 		const interceptorCode = `
             (function(){
                 let lastUrl = location.href;
@@ -319,15 +307,12 @@
             })();
         `;
 		GM_addElement('script', { textContent: interceptorCode });
-
-		// Sandbox escutando evento da página e redirecionando
 		window.addEventListener('__meli_hub_nav', (e) => {
-			const url = e.detail.url;
-			unsafeWindow.dispatchEvent(new CustomEvent('meli-hub:route-change', { detail: { url } }));
+			unsafeWindow.dispatchEvent(new CustomEvent('meli-hub:route-change', { detail: { url: e.detail.url } }));
 		});
 	}
 
-	// ===== CORE & EXECUÇÃO TRIPLE FALLBACK =====
+	// ===== CORE & EXECUÇÃO =====
 	function getCacheKey(pluginId) { return CACHE_PREFIX + pluginId; }
 	function getMetaKey(pluginId) { return META_PREFIX + pluginId; }
 
@@ -345,9 +330,7 @@
 		pluginsMeta[pluginId] = meta;
 	}
 
-	function getMeta(pluginId) {
-		return GM_getValue(getMetaKey(pluginId), null);
-	}
+	function getMeta(pluginId) { return GM_getValue(getMetaKey(pluginId), null); }
 
 	async function fetchAndCachePlugin(plugin) {
 		const url = REPO_RAW + plugin.file;
@@ -359,15 +342,12 @@
 
 	function executePlugin(code, pluginId) {
 		try {
-			// Método 1: Bypassa CSP e roda direto no escopo MAIN_WORLD da página
 			GM_addElement('script', { textContent: code });
 		} catch (e1) {
 			try {
-				// Método 2: Tenta eval no unsafeWindow
 				unsafeWindow.eval(code);
 			} catch (e2) {
 				try {
-					// Método 3: Tenta Function no escopo de Sandbox
 					new Function(code)();
 				} catch (e3) {
 					console.error(`[MELI-HUB] Erro fatal ao executar plugin ${pluginId}:`, e3);
@@ -386,7 +366,6 @@
 
 	async function loadEnabledPlugins() {
 		if (!manifest.length) return;
-		let loadedCount = 0;
 		for (const plugin of manifest) {
 			if (enabledPlugins[plugin.id]) {
 				try {
@@ -394,17 +373,13 @@
 					const cached = getCachedPlugin(plugin.id);
 					if (cached && cached.code) {
 						executePlugin(cached.code, plugin.id);
-						loadedCount++;
 					}
 				} catch (err) {
 					console.error(`[MELI-HUB] Falha ao carregar ${plugin.id}:`, err);
-					showToast(`Erro ao carregar ${plugin.name}`, 'error');
 				}
 			}
 		}
-		if (loadedCount > 0) {
-			showToast(`${loadedCount} plugin(s) carregados`, 'success', 2500);
-		}
+		// Nota: Removido o toast automático no carregamento inicial da página
 	}
 
 	// ===== UI BUILDING =====
@@ -427,8 +402,7 @@
 			const status = getPluginStatus(plugin);
 			const meta = getMeta(plugin.id);
 
-			let statusText = status === 'updated' ? 'Em dia' : (status === 'new' ? 'Novo' : 'Atualização pendente');
-			let statusDotClass = `status-${status}`;
+			let statusText = status === 'updated' ? 'Em dia' : (status === 'new' ? 'Novo' : 'Atualizar');
 
 			const item = document.createElement('div');
 			item.className = 'plugin-item';
@@ -436,12 +410,12 @@
                 <div class="plugin-info">
                     <div class="plugin-name">
                         ${plugin.name}
-                        <span class="plugin-status-dot ${statusDotClass}" title="${statusText}"></span>
+                        <span class="status-badge status-${status}">${statusText}</span>
                     </div>
                     <div class="plugin-desc">${plugin.description}</div>
                     <div class="plugin-meta">
-                        <span>📦 v${plugin.version}</span>
-                        <span>💾 ${meta ? 'v' + meta.version : 'Nunca baixado'}</span>
+                        <span title="Versão disponível no repositório">📦 v${plugin.version}</span>
+                        <span title="Versão salva localmente">💾 ${meta ? 'v' + meta.version : '--'}</span>
                     </div>
                 </div>
                 <label class="toggle-switch">
@@ -449,12 +423,12 @@
                     <span class="slider"></span>
                 </label>
             `;
+
 			const checkbox = item.querySelector('input[type=checkbox]');
 			checkbox.addEventListener('change', async function () {
 				const pluginId = this.dataset.pluginId;
 				enabledPlugins[pluginId] = this.checked;
 				GM_setValue('enabledPlugins', enabledPlugins);
-				updateBadge();
 
 				if (this.checked) {
 					const pluginData = manifest.find(p => p.id === pluginId);
@@ -471,7 +445,7 @@
 						}
 					}
 				} else {
-					showToast(`${plugin.name} desativado (F5 para remover da tela)`, 'info');
+					showToast(`Plugin desativado (F5 para limpar da tela)`, 'info');
 				}
 				renderModal();
 			});
@@ -479,23 +453,11 @@
 		});
 
 		const subtitle = modal.querySelector('.meli-hub-subtitle');
-		if (subtitle) { subtitle.textContent = `${activeCount} de ${manifest.length} plugins ativos`; }
-	}
-
-	function updateBadge() {
-		const btn = document.getElementById('meli-hub-btn');
-		if (!btn) return;
-		let badge = btn.querySelector('.badge');
-		const activeCount = Object.values(enabledPlugins).filter(Boolean).length;
-		if (activeCount > 0) {
-			if (!badge) {
-				badge = document.createElement('span');
-				badge.className = 'badge';
-				btn.appendChild(badge);
-			}
-			badge.textContent = activeCount;
-		} else {
-			if (badge) badge.remove();
+		if (subtitle) {
+			subtitle.innerHTML = `
+                <span>Seus plugins e ferramentas</span>
+                <strong>${activeCount} ativos</strong>
+            `;
 		}
 	}
 
@@ -515,28 +477,19 @@
 	function buildUI() {
 		createToastContainer();
 
-		const btn = document.createElement('button');
-		btn.id = 'meli-hub-btn';
-		btn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`;
-		btn.title = 'MELI HUB';
-		btn.addEventListener('click', openModal);
-		document.body.appendChild(btn);
-
-		updateBadge();
-
 		const modal = document.createElement('div');
 		modal.id = 'meli-hub-modal';
 		modal.innerHTML = `
             <div class="meli-hub-content">
                 <div class="meli-hub-header">
                     <h2>
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
-                        MELI HUB <span class="meli-hub-version">v3.0.0</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        MELI HUB <span class="meli-hub-version">v3.1.0</span>
                     </h2>
-                    <button class="close-btn" id="meli-hub-close">✕</button>
+                    <button class="close-btn" id="meli-hub-close" title="Fechar (ESC)">✕</button>
                 </div>
                 <div class="meli-hub-body">
-                    <div class="meli-hub-subtitle">Carregando...</div>
+                    <div class="meli-hub-subtitle">Carregando plugins...</div>
                     <div class="plugin-list"></div>
                 </div>
                 <div class="meli-hub-footer">
@@ -544,8 +497,8 @@
                         <div class="progress-bar" id="update-progress-bar"></div>
                     </div>
                     <div class="footer-btns">
-                        <button id="meli-hub-update-all" class="primary">🔄 Atualizar todos</button>
-                        <button id="meli-hub-refresh">🔃 Atualizar lista</button>
+                        <button id="meli-hub-refresh" class="secondary">Atualizar Lista</button>
+                        <button id="meli-hub-update-all" class="primary">Sincronizar Plugins</button>
                     </div>
                 </div>
             </div>
@@ -556,12 +509,20 @@
 		modal.querySelector('#meli-hub-close').addEventListener('click', closeModalHandler);
 		modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
 
-		// Atalho de fechar via ESC
+		// ===== ATALHOS DE TECLADO (ALT+H e ESC) =====
 		document.addEventListener('keydown', (e) => {
-			if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+			// ALT + H para abrir/fechar
+			if (e.altKey && e.key.toLowerCase() === 'h') {
+				e.preventDefault(); // Evita comportamentos nativos do browser
+				modal.classList.contains('open') ? closeModal() : openModal();
+			}
+			// ESC para fechar
+			if (e.key === 'Escape' && modal.classList.contains('open')) {
+				closeModal();
+			}
 		});
 
-		// Eventos
+		// Eventos dos botões do footer
 		modal.querySelector('#meli-hub-update-all').addEventListener('click', async function () {
 			const progressContainer = document.getElementById('update-progress-container');
 			const progressBar = document.getElementById('update-progress-bar');
@@ -572,7 +533,7 @@
 			const total = pluginsToUpdate.length;
 
 			if (total === 0) {
-				showToast('Nenhum plugin ativo para atualizar.', 'info');
+				showToast('Nenhum plugin ativo para sincronizar.', 'info');
 				progressContainer.style.display = 'none';
 				return;
 			}
@@ -586,7 +547,7 @@
 					console.error(`[MELI-HUB] Erro ao atualizar ${plugin.id}:`, e);
 				}
 			}
-			showToast(`${updatedCount} plugins atualizados com sucesso!`, 'success');
+			showToast(`${updatedCount} plugin(s) sincronizados com sucesso!`, 'success');
 
 			setTimeout(() => {
 				progressContainer.style.display = 'none';
@@ -613,7 +574,7 @@
 			return JSON.parse(responseText);
 		} catch (err) {
 			console.error('[MELI-HUB] Erro ao buscar manifest:', err);
-			showToast('Não foi possível conectar ao repositório', 'error');
+			showToast('Falha ao conectar ao repositório', 'error');
 			return [];
 		}
 	}

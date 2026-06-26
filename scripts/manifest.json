@@ -1,9 +1,9 @@
 [
 	{
-		"id": "test",
-		"name": "test",
-		"description": "test.",
-		"version": "0.0.1",
-		"file": "test.js"
+		"id": "qr_printer",
+		"name": "QR Code Printer - Package ID",
+		"description": "Atalhos de Impressão: Alt+P imprime pelo sistema; Alt+I seleciona impressora local.",
+		"version": "2.2.0",
+		"file": "qr_printer.js"
 	}
 ]
