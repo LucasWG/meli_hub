@@ -1,11 +1,54 @@
 (function () {
 	// ===== MONITOR LAST MILE — MULTI ESTAÇÕES =====
-	// Versão: v1.2.1 (base: v11.19)
+	// Versão: v1.3.1 (base: v11.19)
 	// Guard clause: remove se já existir
 	if (document.getElementById('mlmp_multi')) {
 		document.getElementById('mlmp_multi').remove();
 		return;
 	}
+
+	const ROUTE_PATTERN = '*';
+	let isRouteActive = false;
+	let currentPackageId = '';
+
+	function checkRoute(url) {
+		if (ROUTE_PATTERN === '*' || url.includes(ROUTE_PATTERN)) {
+			isRouteActive = true;
+			try {
+				const urlObj = new URL(url);
+				if (urlObj.pathname.includes('/package/')) {
+					currentPackageId = urlObj.pathname.split('/').pop();
+				} else {
+					currentPackageId = '';
+				}
+			} catch (e) {
+				if (url.includes('/package/')) {
+					currentPackageId = url.split('/').pop();
+				} else {
+					currentPackageId = '';
+				}
+			}
+			console.log(`[MLM Multi] Ativo (Rota Permitida). Package ID: ${currentPackageId || 'N/A'}`);
+		} else {
+			isRouteActive = false;
+			currentPackageId = '';
+		}
+	}
+
+	checkRoute(location.href);
+	window.addEventListener('meli-hub:route-change', function (e) {
+		checkRoute(e.detail.url);
+	});
+
+	window.addEventListener('keydown', function(e) {
+		if (e.altKey && e.key.toLowerCase() === 'm') {
+			e.preventDefault();
+			var panel = document.getElementById('mlmp_multi');
+			if (panel) {
+				panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+			}
+		}
+	});
 
 	// ===== CORES E FONTES GLOBAIS =====
 	var S = {

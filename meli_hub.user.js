@@ -353,6 +353,7 @@
 	let activeToasts = [];
 	let currentGreeting = '';
 	let isHubOutdated = false;
+	let fetchSeed = Date.now();
 
 	// ===== UTILITÁRIOS =====
 	function showToast(message, type = 'info', duration = 3500) {
@@ -406,7 +407,7 @@
 
 	// ===== ANTI-CACHE FETCH =====
 	function gmFetch(url) {
-		const cacheBusterUrl = url + (url.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+		const cacheBusterUrl = url + (url.includes('?') ? '&' : '?') + 't=' + fetchSeed;
 		console.log('DEBUG - gmFetch', cacheBusterUrl);
 		return new Promise((resolve, reject) => {
 			GM_xmlhttpRequest({
@@ -667,6 +668,7 @@
 	}
 
 	function openModal() {
+		fetchSeed = Date.now();
 		const modal = document.getElementById('meli-hub-modal');
 		if (modal) {
 			const savedName = GM_getValue('cachedUserName', 'Usuário');

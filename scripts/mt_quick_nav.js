@@ -1,4 +1,5 @@
 (function () {
+	// Versão: v1.1.0
 	'use strict';
 
 	if (window.MeliToolsQuickNavInit) return;
@@ -8,12 +9,55 @@
 		typedId: '',
 		timeout: null,
 		display: null,
+		isRouteActive: false,
+		currentPackageId: '',
 
 		init: function () {
 			this.injectCSS();
 			this.createDisplay();
-			document.addEventListener('keydown', this.handleKey.bind(this));
-			document.addEventListener('paste', this.handlePaste.bind(this));
+			
+			// Lida com cliques/teclado
+			this._keyHandler = this.handleKey.bind(this);
+			this._pasteHandler = this.handlePaste.bind(this);
+			document.addEventListener('keydown', this._keyHandler);
+			document.addEventListener('paste', this._pasteHandler);
+
+			this.checkRoute(location.href);
+			
+			// Evento nativo do MELI HUB para mudanças de SPA
+			this._routeHandler = (e) => this.checkRoute(e.detail.url);
+			window.addEventListener('meli-hub:route-change', this._routeHandler);
+
+			// Desativação via Hub
+			window.addEventListener('meli-hub:plugin-disabled', (e) => {
+				if (e.detail && e.detail.pluginId === 'mt_quick_nav') {
+					this.destroy();
+				}
+			});
+		},
+
+		destroy: function () {
+			if (this.display) this.display.remove();
+			document.removeEventListener('keydown', this._keyHandler);
+			document.removeEventListener('paste', this._pasteHandler);
+			window.removeEventListener('meli-hub:route-change', this._routeHandler);
+			window.MeliToolsQuickNavInit = false;
+		},
+
+		checkRoute: function (url) {
+			if (url.includes('/logistics/package-management/package/')) {
+				this.isRouteActive = true;
+				try {
+					const urlObj = new URL(url);
+					this.currentPackageId = urlObj.pathname.split('/').pop();
+				} catch (e) {
+					this.currentPackageId = url.split('/').pop();
+				}
+				console.log(`[Quick Nav] Ativo na página do pacote: ${this.currentPackageId}`);
+			} else {
+				this.isRouteActive = false;
+				this.currentPackageId = '';
+			}
 		},
 
 		injectCSS: function () {

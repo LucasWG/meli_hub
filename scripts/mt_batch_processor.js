@@ -1,4 +1,5 @@
 (function () {
+	// Versão: v1.1.0
 	'use strict';
 
 	if (window.MeliToolsBatchInit) return;
@@ -14,17 +15,62 @@
 			'Pertence a outra área', 'Roubado'
 		],
 		STORAGE_KEY: 'mt_batch_queue',
+		isRouteActive: false,
+		currentPackageId: '',
 
 		init: function () {
 			this.injectCSS();
-			document.addEventListener('keydown', e => {
+			
+			this._keyHandler = (e) => {
 				if (e.altKey && e.key.toLowerCase() === 'q') {
 					e.preventDefault();
 					this.toggleModal();
 				}
-			});
+			};
+			document.addEventListener('keydown', this._keyHandler);
+			
+			this.checkRoute(location.href);
+
 			this.processQueue();
-			window.addEventListener('meli-hub:route-change', () => setTimeout(() => this.processQueue(), 1000));
+			
+			this._routeHandler = (e) => {
+				this.checkRoute(e.detail.url);
+				setTimeout(() => this.processQueue(), 1000);
+			};
+			window.addEventListener('meli-hub:route-change', this._routeHandler);
+
+			window.addEventListener('meli-hub:plugin-disabled', (e) => {
+				if (e.detail && e.detail.pluginId === 'mt_batch_processor') {
+					this.destroy();
+				}
+			});
+		},
+
+		destroy: function () {
+			const modal = document.getElementById('mt-batch-modal');
+			if (modal) modal.remove();
+			const hud = document.getElementById('mt-progress-hud');
+			if (hud) hud.remove();
+			
+			document.removeEventListener('keydown', this._keyHandler);
+			window.removeEventListener('meli-hub:route-change', this._routeHandler);
+			window.MeliToolsBatchInit = false;
+		},
+
+		checkRoute: function (url) {
+			if (url.includes('/logistics/package-management/package/')) {
+				this.isRouteActive = true;
+				try {
+					const urlObj = new URL(url);
+					this.currentPackageId = urlObj.pathname.split('/').pop();
+				} catch (e) {
+					this.currentPackageId = url.split('/').pop();
+				}
+				console.log(`[Batch Processor] Ativo na página do pacote: ${this.currentPackageId}`);
+			} else {
+				this.isRouteActive = false;
+				this.currentPackageId = '';
+			}
 		},
 
 		injectCSS: function () {
