@@ -1,6 +1,6 @@
 (function () {
 	// ===== MONITOR LAST MILE — MULTI ESTAÇÕES =====
-	// Versão: v1.3.2 (base: v11.19)
+	// Versão: v1.3.3 (base: v11.19)
 	// Guard clause: remove se já existir
 	if (document.getElementById('mlmp_multi')) {
 		document.getElementById('mlmp_multi').remove();
@@ -54,7 +54,9 @@
 			e.preventDefault();
 			var panel = document.getElementById('mlmp_multi');
 			if (panel) {
-				panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+				var isHidden = panel.style.display === 'none';
+				panel.style.display = isHidden ? 'flex' : 'none';
+				localStorage.setItem('mlm_multi_modal_visible', isHidden ? 'true' : 'false');
 			}
 		}
 	});
@@ -79,7 +81,11 @@
 	// ===== CASCA EXTERNA: PAINEL MULTI-ESTAÇÃO =====
 	var outerPanel = document.createElement('div');
 	outerPanel.id = 'mlmp_multi';
-	outerPanel.style.cssText = 'position:fixed;top:16px;right:16px;width:1080px;max-height:92vh;background:' + S.bg + ';border:1px solid ' + S.bd + ';border-radius:12px;z-index:999999;box-shadow:0 24px 80px rgba(0,0,0,.9);display:flex;flex-direction:column;font-size:13px;color:' + S.tx + ';overflow:hidden;font-family:sans-serif';
+	
+	var savedVisibility = localStorage.getItem('mlm_multi_modal_visible');
+	var initialDisplay = savedVisibility === 'true' ? 'flex' : 'none';
+	
+	outerPanel.style.cssText = 'position:fixed;top:16px;right:16px;width:1080px;max-height:92vh;background:' + S.bg + ';border:1px solid ' + S.bd + ';border-radius:12px;z-index:999999;box-shadow:0 24px 80px rgba(0,0,0,.9);display:' + initialDisplay + ';flex-direction:column;font-size:13px;color:' + S.tx + ';overflow:hidden;font-family:sans-serif';
 
 	// --- HEADER GLOBAL ---
 	var outerHdr = document.createElement('div');
@@ -179,7 +185,8 @@
 
 	// ===== FECHAR =====
 	document.getElementById('mlmm_close').onclick = function () {
-		outerPanel.remove();
+		outerPanel.style.display = 'none';
+		localStorage.setItem('mlm_multi_modal_visible', 'false');
 	};
 
 	// ===== EASTER EGG — KANGU =====

@@ -21,7 +21,7 @@
 			"id": "mlm_multi",
 			"name": "Monitor Last Mile - Multi Estações",
 			"description": "Painel avançado para monitoramento simultâneo de múltiplas estações, rotas, insucessos, PNR e devoluções.",
-			"version": "1.3.2",
+			"version": "1.3.3",
 			"file": "mlm_multi.js",
 			"required": false
 		},
