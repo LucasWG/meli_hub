@@ -29,8 +29,8 @@
 	// =========================================================================
 	function matchRoute(url, pattern) {
 		if (pattern === '*') return true;
-		const regex = new RegExp('^' + pattern.replace(/[.+?^${}()|[\\]\\\\]/g, '\\\\$&').replace(/\\*/g, '.*') + '$', 'i');
-		return regex.test(url) || url.includes(pattern.replace(/\\*/g, ''));
+		const regex = new RegExp('^' + pattern.replace(/[.+?^${}()|[\\]\\\\]/g, '\\\\$&').replace(/\*/g, '.*') + '$', 'i');
+		return regex.test(url) || url.includes(pattern.replace(/\*/g, ''));
 	}
 
 	function checkRoute(url) {

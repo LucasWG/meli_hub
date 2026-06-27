@@ -1,5 +1,5 @@
 (function () {
-	// Versão: v1.2.0
+	// Versão: v1.2.1
 	'use strict';
 
 	if (window.MeliToolsBatchInit) return;
@@ -63,8 +63,8 @@
 
 		matchRoute: function (url, pattern) {
 			if (pattern === '*') return true;
-			const regex = new RegExp('^' + pattern.replace(/[.+?^${}()|[\\]\\\\]/g, '\\\\$&').replace(/\\*/g, '.*') + '$', 'i');
-			return regex.test(url) || url.includes(pattern.replace(/\\*/g, ''));
+			const regex = new RegExp('^' + pattern.replace(/[.+?^${}()|[\\]\\\\]/g, '\\\\$&').replace(/\*/g, '.*') + '$', 'i');
+			return regex.test(url) || url.includes(pattern.replace(/\*/g, ''));
 		},
 
 		checkRoute: function (url) {

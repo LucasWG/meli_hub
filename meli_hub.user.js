@@ -15,6 +15,7 @@
 // @grant        GM_addValueChangeListener
 // @connect      raw.githubusercontent.com
 // @connect      github.com
+// @connect      127.0.0.1
 // @sandbox      JavaScript
 // @run-at       document-start
 // ==/UserScript==
@@ -23,7 +24,7 @@
 	'use strict';
 
 	// ===== CONFIGURAÇÕES =====
-	const HUB_VERSION = '3.3.0';
+	const HUB_VERSION = '3.3.1';
 	const REPO_RAW = 'http://127.0.0.1:5500/';
 	// const REPO_RAW = 'https://raw.githubusercontent.com/LucasRepML/meli_hub/main/';
 	const MANIFEST_URL = REPO_RAW + 'manifest.json';
@@ -158,7 +159,7 @@
 	// ===== ANTI-CACHE FETCH =====
 	function gmFetch(url, onProgress) {
 		const cacheBusterUrl = url + (url.includes('?') ? '&' : '?') + 't=' + fetchSeed;
-		console.log('DEBUG - gmFetch', cacheBusterUrl);
+
 		return new Promise((resolve, reject) => {
 			GM_xmlhttpRequest({
 				method: 'GET',

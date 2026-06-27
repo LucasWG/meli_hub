@@ -1,6 +1,6 @@
 (function () {
 	// ===== MONITOR LAST MILE — MULTI ESTAÇÕES =====
-	// Versão: v1.4.0 (base: v11.19)
+	// Versão: v1.4.1 (base: v11.19)
 	// Guard clause: remove se já existir
 	if (document.getElementById('mlmp_multi')) {
 		document.getElementById('mlmp_multi').remove();
@@ -16,8 +16,8 @@
 
 	function matchRoute(url, pattern) {
 		if (pattern === '*') return true;
-		const regex = new RegExp('^' + pattern.replace(/[.+?^${}()|[\\]\\\\]/g, '\\\\$&').replace(/\\*/g, '.*') + '$', 'i');
-		return regex.test(url) || url.includes(pattern.replace(/\\*/g, ''));
+		const regex = new RegExp('^' + pattern.replace(/[.+?^${}()|[\\]\\\\]/g, '\\\\$&').replace(/\*/g, '.*') + '$', 'i');
+		return regex.test(url) || url.includes(pattern.replace(/\*/g, ''));
 	}
 
 	function checkRoute(url) {
