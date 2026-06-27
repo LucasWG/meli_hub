@@ -11,6 +11,7 @@
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addElement
 // @grant        unsafeWindow
+// @grant        GM_openInTab
 // @connect      raw.githubusercontent.com
 // @connect      github.com
 // @sandbox      JavaScript
@@ -21,12 +22,79 @@
 	'use strict';
 
 	// ===== CONFIGURAÇÕES =====
-	const REPO_RAW = 'https://raw.githubusercontent.com/LucasRepML/meli_hub/main/scripts/';
+	const HUB_VERSION = '3.2.0';
+	const REPO_RAW = 'https://raw.githubusercontent.com/LucasRepML/meli_hub/main/';
 	const MANIFEST_URL = REPO_RAW + 'manifest.json';
+	const HUB_SCRIPT_URL = REPO_RAW + 'meli_hub.user.js';
 	const CACHE_PREFIX = 'plugin_cache_';
 	const META_PREFIX = 'plugin_meta_';
+	const MAX_TOASTS = 3;
 
-	// ===== ESTILOS GLOBAIS (UI v3.2.0 - Tema Mercado Livre) =====
+	// ===== GREETINGS =====
+	const GREETINGS_PREFIXES = [
+		'Olá', 'Oi', 'Bem-vindo(a) de volta', 'Que bom te ver', 'Saudações', 
+		'Tudo pronto por aqui', 'Vamos nessa', 'Preparado(a)', 'Excelente dia', 'Firme e forte',
+		'E aí', 'Muito bom te ver', 'Prontos para mais', 'Tudo em ordem', 'Sempre em frente'
+	];
+	const GREETINGS_SUFFIXES = [
+		'! Pronto para arrasar?', '! Vamos fazer acontecer?', '. Espero que seu dia seja ótimo!', 
+		'! Mais um dia de sucesso!', '. Estamos juntos nessa!', '! Que seu dia seja produtivo.', 
+		'. Bora pra cima!', '. Conte com o Hub!', '! Tudo otimizado para você.', '. Vamos automatizar!',
+		'! O dever nos chama.', '. Missão dada é missão cumprida!', '! Facilidade e agilidade garantidas.', 
+		'. Vamos com tudo!', '! Hub 100% carregado e pronto.'
+	];
+
+	function getRandomGreeting(name) {
+		const time = new Date().getHours();
+		let period = "Bom dia";
+		if (time >= 12 && time < 18) period = "Boa tarde";
+		else if (time >= 18) period = "Boa noite";
+		
+		const usePeriod = Math.random() > 0.5;
+		const prefix = usePeriod ? period : GREETINGS_PREFIXES[Math.floor(Math.random() * GREETINGS_PREFIXES.length)];
+		const suffix = GREETINGS_SUFFIXES[Math.floor(Math.random() * GREETINGS_SUFFIXES.length)];
+		return `${prefix}, ${name}${suffix}`;
+	}
+
+	function getUserName() {
+		// Procura no DOM principal
+		const mainSpan = document.querySelector('.kraken-user-menu__trigger span');
+		if (mainSpan && mainSpan.textContent.trim()) {
+			const n = mainSpan.textContent.trim();
+			GM_setValue('cachedUserName', n);
+			return n;
+		}
+
+		// Procura dentro de Shadow DOMs (kraken menu usa declarative shadow DOM)
+		const allElements = document.querySelectorAll('*');
+		for (let i = 0; i < allElements.length; i++) {
+			if (allElements[i].shadowRoot) {
+				const span = allElements[i].shadowRoot.querySelector('.kraken-user-menu__trigger span');
+				if (span && span.textContent.trim()) {
+					const n = span.textContent.trim();
+					GM_setValue('cachedUserName', n);
+					return n;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	function getAsyncUserName(maxWaitMs = 6000) {
+		const start = Date.now();
+		return new Promise(resolve => {
+			const check = () => {
+				const name = getUserName();
+				if (name) return resolve(name);
+				if (Date.now() - start > maxWaitMs) return resolve('Usuário');
+				setTimeout(check, 300);
+			};
+			check();
+		});
+	}
+
+	// ===== ESTILOS GLOBAIS (UI v3.3.0 - Tema Profissional Mercado Livre) =====
 	GM_addStyle(`
         /* ========== TIPOGRAFIA E VARIAVEIS ========== */
         :root {
@@ -35,110 +103,128 @@
             --ml-blue-hover: #2968c8;
             --ml-green: #00A650;
             --ml-red: #F23D4F;
-            --ml-bg: #EBEBEB;
+            --ml-bg: #EDEDED;
             --ml-white: #FFFFFF;
             --ml-text-main: #333333;
             --ml-text-muted: #666666;
             --ml-text-light: #999999;
             --ml-border: #E6E6E6;
             --ml-font: 'Proxima Nova', -apple-system, 'Helvetica Neue', Helvetica, Roboto, Arial, sans-serif;
+            --ml-shadow-sm: 0 1px 2px 0 rgba(0,0,0,.12);
+            --ml-shadow-md: 0 4px 8px 0 rgba(0,0,0,.1);
+            --ml-shadow-lg: 0 15px 30px 0 rgba(0,0,0,.15);
         }
 
-        /* ========== TOASTS ========== */
+        /* ========== TOASTS INTELIGENTES ========== */
         #meli-toast-container {
             position: fixed;
             bottom: 24px;
             right: 24px;
             z-index: 1000001;
             display: flex;
-            flex-direction: column-reverse;
+            flex-direction: column;
             gap: 12px;
             pointer-events: none;
+            align-items: flex-end;
         }
         .meli-toast {
             background: var(--ml-white);
             color: var(--ml-text-main);
             border-left: 4px solid var(--ml-blue);
-            padding: 14px 18px;
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: var(--ml-shadow-md);
             font-family: var(--ml-font);
             font-size: 14px;
-            min-width: 260px;
+            font-weight: 500;
+            min-width: 280px;
+            max-width: 400px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            animation: meli-slideIn 0.3s ease-out;
-            border-top: 1px solid var(--ml-border);
-            border-right: 1px solid var(--ml-border);
-            border-bottom: 1px solid var(--ml-border);
+            gap: 14px;
+            animation: meli-slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.3s ease;
+            pointer-events: auto;
         }
         .meli-toast.success { border-left-color: var(--ml-green); }
         .meli-toast.error   { border-left-color: var(--ml-red); }
         .meli-toast.info    { border-left-color: var(--ml-blue); }
-        .meli-toast-icon { font-size: 18px; flex-shrink: 0; }
-        @keyframes meli-slideIn {
-            from { opacity: 0; transform: translateX(40px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes meli-slideOut {
-            from { opacity: 1; transform: translateX(0); }
-            to { opacity: 0; transform: translateX(40px); }
+        .meli-toast-icon { font-size: 20px; flex-shrink: 0; }
+        
+        .meli-toast.hiding {
+            animation: meli-slideOut 0.3s ease forwards;
         }
 
-        /* ========== MODAL ========== */
+        @keyframes meli-slideIn {
+            from { opacity: 0; transform: translateX(60px) scale(0.9); }
+            to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        @keyframes meli-slideOut {
+            from { opacity: 1; transform: translateX(0) scale(1); }
+            to { opacity: 0; transform: translateX(60px) scale(0.9); }
+        }
+
+        /* ========== MODAL PROFISSIONAL ========== */
         #meli-hub-modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
             z-index: 1000000;
             justify-content: center;
             align-items: center;
-            animation: meli-fadeIn 0.2s ease;
+            animation: meli-fadeIn 0.3s ease;
         }
         #meli-hub-modal.open { display: flex; }
         @keyframes meli-fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .meli-hub-content {
             background: var(--ml-bg);
-            border-radius: 8px;
+            border-radius: 12px;
             display: flex;
             flex-direction: column;
-            width: 92%;
-            max-width: 600px;
+            width: 95%;
+            max-width: 800px;
             max-height: 85vh;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: var(--ml-shadow-lg);
             font-family: var(--ml-font);
             color: var(--ml-text-main);
             overflow: hidden;
+            transform: translateY(20px);
+            animation: meli-slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes meli-slideUp {
+            to { transform: translateY(0); }
         }
 
         /* Modal Header */
         .meli-hub-header {
             background: var(--ml-yellow);
-            padding: 16px 24px;
+            padding: 20px 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
         }
         .meli-hub-header h2 {
-            margin: 0; font-size: 20px; font-weight: 600;
-            display: flex; align-items: center; gap: 8px; color: var(--ml-text-main);
+            margin: 0; font-size: 22px; font-weight: 600;
+            display: flex; align-items: center; gap: 10px; color: var(--ml-text-main);
         }
         .meli-hub-version {
-            font-size: 12px; background: rgba(0,0,0,0.08); color: var(--ml-text-main);
-            padding: 2px 8px; border-radius: 12px; margin-left: 8px; font-weight: 600;
+            font-size: 13px; background: rgba(0,0,0,0.1); color: var(--ml-text-main);
+            padding: 3px 10px; border-radius: 14px; margin-left: 8px; font-weight: 700;
         }
         .close-btn {
-            background: none; border: none; color: var(--ml-text-main); font-size: 24px;
-            cursor: pointer; transition: opacity 0.2s; padding: 0; line-height: 1; opacity: 0.6;
+            background: rgba(0,0,0,0.05); border: none; color: var(--ml-text-main); font-size: 20px;
+            cursor: pointer; transition: all 0.2s; width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-weight: bold;
         }
-        .close-btn:hover { opacity: 1; }
+        .close-btn:hover { background: rgba(0,0,0,0.15); transform: scale(1.05); }
 
         /* Modal Body */
         .meli-hub-body {
-            padding: 24px;
+            padding: 28px;
             overflow-y: auto;
             background: var(--ml-bg);
             scrollbar-width: thin;
@@ -148,86 +234,108 @@
         .meli-hub-body::-webkit-scrollbar-thumb { background: #cccccc; border-radius: 4px; }
 
         .meli-hub-subtitle {
-            font-size: 14px; color: var(--ml-text-muted); margin-bottom: 16px; font-weight: 400;
+            font-size: 15px; color: var(--ml-text-muted); margin-bottom: 20px; font-weight: 600;
             display: flex; justify-content: space-between; align-items: center;
         }
 
         /* Plugin List */
         .plugin-list {
-            display: flex; flex-direction: column; gap: 12px;
+            display: flex; flex-direction: column; gap: 16px;
         }
         .plugin-item {
             background: var(--ml-white);
             border: 1px solid var(--ml-border);
-            border-radius: 6px;
-            padding: 16px;
-            display: flex; align-items: center; justify-content: space-between;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-            transition: box-shadow 0.2s;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex; align-items: stretch; gap: 20px;
+            box-shadow: var(--ml-shadow-sm);
+            transition: all 0.25s ease;
         }
         .plugin-item:hover {
-            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+            box-shadow: var(--ml-shadow-md);
+            transform: translateY(-2px);
+            border-color: rgba(52, 131, 250, 0.3);
         }
-        .plugin-info { flex: 1; min-width: 0; }
+        .plugin-icon {
+            width: 54px; height: 54px; background: rgba(52,131,250,0.1); color: var(--ml-blue);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; font-weight: bold; flex-shrink: 0; align-self: flex-start;
+        }
+        .plugin-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
         .plugin-name {
-            font-weight: 600; font-size: 16px; color: var(--ml-text-main);
-            display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+            font-weight: 700; font-size: 18px; color: var(--ml-text-main);
+            display: flex; align-items: center; gap: 12px; margin-bottom: 6px;
         }
-        .plugin-desc { font-size: 13px; color: var(--ml-text-muted); line-height: 1.5; }
-        .plugin-meta {
-            display: flex; gap: 16px; margin-top: 10px; font-size: 12px; color: var(--ml-text-light);
+        .plugin-desc { font-size: 14px; color: var(--ml-text-muted); line-height: 1.5; margin-bottom: 14px; }
+        
+        .plugin-details {
+            display: flex; flex-wrap: wrap; gap: 12px 24px; font-size: 13px; color: var(--ml-text-light);
+            background: rgba(0,0,0,0.02); padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.04);
         }
-        .plugin-meta span { display: flex; align-items: center; gap: 4px; }
+        .plugin-details .detail-item { display: flex; align-items: center; gap: 6px; font-weight: 500; }
+        .plugin-details .detail-item span { color: var(--ml-text-muted); font-weight: 600; }
+        
+        .plugin-action { 
+            display: flex; align-items: center; justify-content: center; 
+            padding-left: 20px; border-left: 1px solid var(--ml-border); 
+        }
 
         /* Badges de Status */
         .status-badge {
-            font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600; text-transform: uppercase;
+            font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         .status-new { background: #E1F0FF; color: var(--ml-blue); }
         .status-updated { background: #E6F7ED; color: var(--ml-green); }
         .status-pending { background: #FFF0E6; color: #E86000; }
 
         /* Toggle Switch (Meli Style) */
-        .toggle-switch { position: relative; width: 40px; height: 20px; flex-shrink: 0; margin-left: 16px; }
+        .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cccccc; transition: .3s; border-radius: 20px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cccccc; transition: .3s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         input:checked + .slider { background-color: var(--ml-blue); }
         input:checked + .slider:before { transform: translateX(20px); }
+        input:focus + .slider { box-shadow: 0 0 1px var(--ml-blue); }
 
         /* Modal Footer */
         .meli-hub-footer {
             background: var(--ml-white);
-            padding: 16px 24px; border-top: 1px solid var(--ml-border);
-            display: flex; flex-direction: column; gap: 12px;
+            padding: 20px 28px; border-top: 1px solid var(--ml-border);
+            display: flex; flex-direction: column; gap: 16px;
         }
         .progress-container {
-            height: 4px; background: var(--ml-bg); border-radius: 4px; overflow: hidden;
+            height: 6px; background: var(--ml-bg); border-radius: 6px; overflow: hidden;
             display: none;
         }
         .progress-bar {
             height: 100%; width: 0%; background: var(--ml-blue);
             transition: width 0.3s ease;
         }
-        .footer-btns { display: flex; gap: 12px; }
+        .footer-btns { display: flex; gap: 16px; }
         .footer-btns button {
-            flex: 1; padding: 12px; border: none; border-radius: 6px;
-            font-family: var(--ml-font); font-weight: 600; font-size: 14px;
-            cursor: pointer; transition: background 0.2s, color 0.2s;
+            flex: 1; padding: 14px; border: none; border-radius: 6px;
+            font-family: var(--ml-font); font-weight: 600; font-size: 15px;
+            cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .footer-btns button.secondary {
-            background: rgba(65,137,230,.15); color: var(--ml-blue);
+            background: rgba(65,137,230,.1); color: var(--ml-blue);
         }
         .footer-btns button.secondary:hover { background: rgba(65,137,230,.2); }
-
-        .footer-btns button.primary { background: var(--ml-blue); color: var(--ml-white); }
-        .footer-btns button.primary:hover { background: var(--ml-blue-hover); }
+        
+        .footer-btns button.primary { background: var(--ml-blue); color: var(--ml-white); box-shadow: 0 2px 4px rgba(52,131,250,0.4); }
+        .footer-btns button.primary:hover { background: var(--ml-blue-hover); box-shadow: 0 4px 8px rgba(52,131,250,0.5); transform: translateY(-1px); }
+        
+        .footer-btns button.action { background: var(--ml-green); color: var(--ml-white); box-shadow: 0 2px 4px rgba(0,166,80,0.4); }
+        .footer-btns button.action:hover { background: #008f45; box-shadow: 0 4px 8px rgba(0,166,80,0.5); transform: translateY(-1px); }
     `);
 
 	// ===== ESTADO GLOBAL =====
-	let manifest = [];
+	let manifestData = { hub_version: HUB_VERSION, plugins: [] };
 	let enabledPlugins = GM_getValue('enabledPlugins', {});
 	let pluginsMeta = GM_getValue('pluginsMeta', {});
+	let activeToasts = [];
+	let currentGreeting = '';
 
 	// ===== UTILITÁRIOS =====
 	function showToast(message, type = 'info', duration = 3500) {
@@ -238,12 +346,25 @@
 		const toast = document.createElement('div');
 		toast.className = `meli-toast ${type}`;
 		toast.innerHTML = `<span class="meli-toast-icon">${icons[type] || '🔔'}</span><span>${message}</span>`;
+		
 		container.appendChild(toast);
+		activeToasts.push(toast);
+
+		// Limita a quantidade de toasts na tela
+		if (activeToasts.length > MAX_TOASTS) {
+			const oldestToast = activeToasts.shift();
+			oldestToast.classList.add('hiding');
+			setTimeout(() => { if (oldestToast.parentNode) oldestToast.remove(); }, 300);
+		}
 
 		setTimeout(() => {
-			if (toast.parentNode) {
-				toast.style.animation = 'meli-slideOut 0.25s forwards';
-				setTimeout(() => toast.remove(), 250);
+			if (toast.parentNode && !toast.classList.contains('hiding')) {
+				toast.classList.add('hiding');
+				setTimeout(() => {
+					if (toast.parentNode) toast.remove();
+					const index = activeToasts.indexOf(toast);
+					if (index > -1) activeToasts.splice(index, 1);
+				}, 300);
 			}
 		}, duration);
 	}
@@ -268,14 +389,12 @@
 
 	// ===== ANTI-CACHE FETCH =====
 	function gmFetch(url) {
-		// Cache Buster: Adiciona um timestamp na URL para forçar o CDN do GitHub e o navegador a baixar a versão mais recente
 		const cacheBusterUrl = url + (url.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
-
 		return new Promise((resolve, reject) => {
 			GM_xmlhttpRequest({
 				method: 'GET',
 				url: cacheBusterUrl,
-				nocache: true, // Diretiva nativa do Tampermonkey
+				nocache: true,
 				headers: {
 					'Cache-Control': 'no-cache, no-store, must-revalidate',
 					'Pragma': 'no-cache',
@@ -375,9 +494,9 @@
 	}
 
 	async function loadEnabledPlugins() {
-		if (!manifest.length) return;
-		for (const plugin of manifest) {
-			if (enabledPlugins[plugin.id]) {
+		if (!manifestData.plugins || !manifestData.plugins.length) return;
+		for (const plugin of manifestData.plugins) {
+			if (plugin.required || enabledPlugins[plugin.id]) {
 				try {
 					await ensurePluginReady(plugin);
 					const cached = getCachedPlugin(plugin.id);
@@ -389,6 +508,39 @@
 				}
 			}
 		}
+	}
+
+	// ===== UPDATE CHECKER =====
+	function compareVersions(v1, v2) {
+		const p1 = v1.split('.').map(Number);
+		const p2 = v2.split('.').map(Number);
+		for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+			const n1 = p1[i] || 0;
+			const n2 = p2[i] || 0;
+			if (n1 > n2) return 1;
+			if (n1 < n2) return -1;
+		}
+		return 0;
+	}
+
+	async function updateAllEnabledPlugins(showToasts = true) {
+		const pluginsToUpdate = manifestData.plugins.filter(p => p.required || enabledPlugins[p.id]);
+		let updatedCount = 0;
+		for (const plugin of pluginsToUpdate) {
+			const meta = getMeta(plugin.id);
+			if (!meta || meta.version !== plugin.version) {
+				try {
+					await fetchAndCachePlugin(plugin);
+					updatedCount++;
+				} catch (e) {
+					console.error(`[MELI-HUB] Erro ao atualizar ${plugin.id}:`, e);
+				}
+			}
+		}
+		if (showToasts && updatedCount > 0) {
+			showToast(`${updatedCount} plugin(s) atualizado(s) com sucesso!`, 'success');
+		}
+		return updatedCount;
 	}
 
 	// ===== UI BUILDING =====
@@ -403,34 +555,43 @@
 		const modal = document.getElementById('meli-hub-modal');
 		if (!modal) return;
 		const listContainer = modal.querySelector('.plugin-list');
-		const activeCount = Object.values(enabledPlugins).filter(Boolean).length;
+		
+		const optionalPlugins = manifestData.plugins.filter(p => !p.required);
+		const activeCount = optionalPlugins.filter(p => enabledPlugins[p.id]).length;
+		
 		listContainer.innerHTML = '';
 
-		manifest.forEach(plugin => {
+		optionalPlugins.forEach(plugin => {
 			const enabled = !!enabledPlugins[plugin.id];
 			const status = getPluginStatus(plugin);
 			const meta = getMeta(plugin.id);
-
-			let statusText = status === 'updated' ? 'Em dia' : (status === 'new' ? 'Novo' : 'Atualizar');
+			const statusText = status === 'updated' ? 'Em dia' : (status === 'new' ? 'Novo' : 'Atualizar');
+			const lastUpdated = meta && meta.lastUpdated ? new Date(meta.lastUpdated).toLocaleString('pt-BR') : 'Nunca';
+			const initial = plugin.name.charAt(0).toUpperCase();
 
 			const item = document.createElement('div');
 			item.className = 'plugin-item';
 			item.innerHTML = `
+                <div class="plugin-icon">${initial}</div>
                 <div class="plugin-info">
                     <div class="plugin-name">
                         ${plugin.name}
                         <span class="status-badge status-${status}">${statusText}</span>
                     </div>
                     <div class="plugin-desc">${plugin.description}</div>
-                    <div class="plugin-meta">
-                        <span title="Versão disponível no repositório">📦 v${plugin.version}</span>
-                        <span title="Versão salva localmente">💾 ${meta ? 'v' + meta.version : '--'}</span>
+                    <div class="plugin-details">
+                        <div class="detail-item"><span>📦 Nuvem:</span> v${plugin.version}</div>
+                        <div class="detail-item"><span>💾 Local:</span> ${meta ? 'v' + meta.version : '--'}</div>
+                        <div class="detail-item"><span>🔄 Sincronizado:</span> ${lastUpdated}</div>
+                        <div class="detail-item"><span>🔗 ID:</span> ${plugin.id}</div>
                     </div>
                 </div>
-                <label class="toggle-switch">
-                    <input type="checkbox" ${enabled ? 'checked' : ''} data-plugin-id="${plugin.id}">
-                    <span class="slider"></span>
-                </label>
+                <div class="plugin-action">
+                    <label class="toggle-switch">
+                        <input type="checkbox" ${enabled ? 'checked' : ''} data-plugin-id="${plugin.id}">
+                        <span class="slider"></span>
+                    </label>
+                </div>
             `;
 
 			const checkbox = item.querySelector('input[type=checkbox]');
@@ -440,7 +601,7 @@
 				GM_setValue('enabledPlugins', enabledPlugins);
 
 				if (this.checked) {
-					const pluginData = manifest.find(p => p.id === pluginId);
+					const pluginData = manifestData.plugins.find(p => p.id === pluginId);
 					if (pluginData) {
 						try {
 							await ensurePluginReady(pluginData);
@@ -463,18 +624,45 @@
 
 		const subtitle = modal.querySelector('.meli-hub-subtitle');
 		if (subtitle) {
+			const displayGreeting = currentGreeting || getRandomGreeting(getUserName());
 			subtitle.innerHTML = `
-                <span>Seus plugins e ferramentas</span>
+                <span>${displayGreeting}</span>
                 <strong>${activeCount} ativos</strong>
             `;
+		}
+		
+		// Atualiza botão de update se houver atualização pendente para o Hub
+		const updateBtn = modal.querySelector('#meli-hub-update-hub');
+		if (updateBtn) {
+			const hasHubUpdate = compareVersions(manifestData.hub_version || HUB_VERSION, HUB_VERSION) > 0;
+			updateBtn.style.display = hasHubUpdate ? 'flex' : 'none';
 		}
 	}
 
 	function openModal() {
 		const modal = document.getElementById('meli-hub-modal');
 		if (modal) {
+			const savedName = GM_getValue('cachedUserName', 'Usuário');
+			const immediateName = getUserName();
+			currentGreeting = getRandomGreeting(immediateName || savedName);
+			
 			modal.classList.add('open');
 			renderModal();
+			
+			// Se não pegou síncrono, tenta atualizar assincronamente (em background)
+			if (!immediateName) {
+				getAsyncUserName(2500).then(asyncName => {
+					if (asyncName && asyncName !== 'Usuário' && asyncName !== savedName) {
+						currentGreeting = getRandomGreeting(asyncName);
+						renderModal();
+					}
+				});
+			}
+			
+			// Auto check for plugin updates when modal opens
+			updateAllEnabledPlugins(true).then(count => {
+				if(count > 0) renderModal();
+			});
 		}
 	}
 
@@ -492,8 +680,8 @@
             <div class="meli-hub-content">
                 <div class="meli-hub-header">
                     <h2>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                        MELI HUB <span class="meli-hub-version">v3.2.0</span>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 12l10 5 10-5"></path><path d="M2 17l10 5 10-5"></path></svg>
+                        MELI HUB <span class="meli-hub-version">v${HUB_VERSION}</span>
                     </h2>
                     <button class="close-btn" id="meli-hub-close" title="Fechar (ESC)">✕</button>
                 </div>
@@ -506,8 +694,9 @@
                         <div class="progress-bar" id="update-progress-bar"></div>
                     </div>
                     <div class="footer-btns">
-                        <button id="meli-hub-refresh" class="secondary">Atualizar Lista</button>
-                        <button id="meli-hub-update-all" class="primary">Sincronizar Plugins</button>
+                        <button id="meli-hub-update-hub" class="action" style="display:none;">🚀 Atualizar Hub</button>
+                        <button id="meli-hub-refresh" class="secondary">↻ Atualizar Lista</button>
+                        <button id="meli-hub-update-all" class="primary">⬇️ Sincronizar Plugins</button>
                     </div>
                 </div>
             </div>
@@ -520,44 +709,35 @@
 
 		// ===== ATALHOS DE TECLADO (ALT+H e ESC) =====
 		document.addEventListener('keydown', (e) => {
-			// ALT + H para abrir/fechar
 			if (e.altKey && e.key.toLowerCase() === 'h') {
-				e.preventDefault(); // Evita comportamentos nativos do browser
+				e.preventDefault();
 				modal.classList.contains('open') ? closeModal() : openModal();
 			}
-			// ESC para fechar
 			if (e.key === 'Escape' && modal.classList.contains('open')) {
 				closeModal();
 			}
 		});
 
 		// Eventos dos botões do footer
+		modal.querySelector('#meli-hub-update-hub').addEventListener('click', function () {
+			showToast('Baixando nova versão do MELI HUB...', 'info');
+			GM_openInTab(HUB_SCRIPT_URL, { active: true });
+		});
+
 		modal.querySelector('#meli-hub-update-all').addEventListener('click', async function () {
 			const progressContainer = document.getElementById('update-progress-container');
 			const progressBar = document.getElementById('update-progress-bar');
 			progressContainer.style.display = 'block';
 
-			let updatedCount = 0;
-			const pluginsToUpdate = manifest.filter(p => enabledPlugins[p.id]);
-			const total = pluginsToUpdate.length;
-
-			if (total === 0) {
-				showToast('Nenhum plugin ativo para sincronizar.', 'info');
-				progressContainer.style.display = 'none';
-				return;
+			const count = await updateAllEnabledPlugins(false);
+			
+			if (count === 0) {
+				showToast('Todos os plugins já estão na versão mais recente.', 'info');
+			} else {
+				showToast(`${count} plugin(s) sincronizados com sucesso!`, 'success');
 			}
 
-			for (const plugin of pluginsToUpdate) {
-				try {
-					await fetchAndCachePlugin(plugin);
-					updatedCount++;
-					progressBar.style.width = Math.round((updatedCount / total) * 100) + '%';
-				} catch (e) {
-					console.error(`[MELI-HUB] Erro ao atualizar ${plugin.id}:`, e);
-				}
-			}
-			showToast(`${updatedCount} plugin(s) sincronizados com sucesso!`, 'success');
-
+			progressBar.style.width = '100%';
 			setTimeout(() => {
 				progressContainer.style.display = 'none';
 				progressBar.style.width = '0%';
@@ -567,7 +747,7 @@
 
 		modal.querySelector('#meli-hub-refresh').addEventListener('click', async function () {
 			try {
-				manifest = await fetchManifest();
+				manifestData = await fetchManifest();
 				renderModal();
 				showToast('Lista de plugins atualizada', 'success');
 			} catch (e) {
@@ -580,21 +760,67 @@
 	async function fetchManifest() {
 		try {
 			const responseText = await gmFetch(MANIFEST_URL);
-			return JSON.parse(responseText);
+			const data = JSON.parse(responseText);
+			// Compatibilidade com manifest antigo (array) para novo (objeto)
+			if (Array.isArray(data)) {
+				return { hub_version: HUB_VERSION, plugins: data };
+			}
+			return data;
 		} catch (err) {
 			console.error('[MELI-HUB] Erro ao buscar manifest:', err);
-			showToast('Falha ao conectar ao repositório', 'error');
-			return [];
+			return { hub_version: HUB_VERSION, plugins: [] };
 		}
 	}
 
 	// ===== INIT =====
 	async function init() {
-		manifest = await fetchManifest();
-
+		manifestData = await fetchManifest();
+		
 		whenBody(() => {
 			injectRouteInterceptor();
 			buildUI();
+			
+			const isFirstRun = !GM_getValue('firstRunDone', false);
+			
+			if (isFirstRun) {
+				// Lógica da primeira vez
+				setTimeout(async () => {
+					const userName = await getAsyncUserName();
+					openModal();
+					showToast(getRandomGreeting(userName), 'success', 6000);
+					updateAllEnabledPlugins(false).then(() => {
+						renderModal();
+					});
+					GM_setValue('firstRunDone', true);
+				}, 500);
+			} else {
+				// Checa atualizações silenciosamente
+				const hasHubUpdate = compareVersions(manifestData.hub_version || HUB_VERSION, HUB_VERSION) > 0;
+				if (hasHubUpdate) {
+					showToast('Nova versão do MELI HUB disponível!', 'info');
+					// Força a atualização do Hub
+					setTimeout(() => {
+						GM_openInTab(HUB_SCRIPT_URL, { active: true });
+					}, 2000);
+				}
+				
+				// Checa atualizações de plugins habilitados
+				const pluginsToUpdate = manifestData.plugins.filter(p => p.required || enabledPlugins[p.id]);
+				let hasPluginUpdate = false;
+				for (const plugin of pluginsToUpdate) {
+					const meta = getMeta(plugin.id);
+					if (!meta || meta.version !== plugin.version) {
+						hasPluginUpdate = true;
+						break;
+					}
+				}
+				
+				if (hasPluginUpdate && !hasHubUpdate) {
+					// Abre modal automaticamente para atualizar
+					openModal();
+				}
+			}
+
 			loadEnabledPlugins();
 		});
 	}
