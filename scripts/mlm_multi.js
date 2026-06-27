@@ -1,6 +1,7 @@
 (function () {
-	// ===== MONITOR LAST MILE — MULTI ESTAÇÕES =====
-	// Versão: v1.4.1 (base: v11.19)
+	// ===== [MeGaMente] MONITOR LAST MILE — MULTI ESTAÇÕES =====
+	// Criado por: Geraldo | Compartilhado por: Carlinhos (Mega Mente)
+	// Versão: v1.4.4 (base: v11.19)
 	// Guard clause: remove se já existir
 	if (document.getElementById('mlmp_multi')) {
 		document.getElementById('mlmp_multi').remove();
@@ -12,7 +13,6 @@
 	];
 
 	let isRouteActive = false;
-	let currentPackageId = '';
 
 	function matchRoute(url, pattern) {
 		if (pattern === '*') return true;
@@ -21,26 +21,9 @@
 	}
 
 	function checkRoute(url) {
-		if (ALLOWED_ROUTES.some(p => matchRoute(url, p))) {
-			isRouteActive = true;
-			try {
-				const urlObj = new URL(url);
-				if (urlObj.pathname.includes('/package/')) {
-					currentPackageId = urlObj.pathname.split('/').pop();
-				} else {
-					currentPackageId = '';
-				}
-			} catch (e) {
-				if (url.includes('/package/')) {
-					currentPackageId = url.split('/').pop();
-				} else {
-					currentPackageId = '';
-				}
-			}
-			console.log(`[MLM Multi] Ativo (Rota Permitida). Package ID: ${currentPackageId || 'N/A'}`);
-		} else {
-			isRouteActive = false;
-			currentPackageId = '';
+		isRouteActive = ALLOWED_ROUTES.some(p => matchRoute(url, p));
+		if (isRouteActive) {
+			console.log(`[MLM Multi] Ativo (Rota Permitida).`);
 		}
 	}
 
@@ -49,7 +32,7 @@
 		checkRoute(e.detail.url);
 	});
 
-	window.addEventListener('keydown', function(e) {
+	document.addEventListener('keydown', function(e) {
 		if (e.altKey && e.key.toLowerCase() === 'm') {
 			e.preventDefault();
 			var panel = document.getElementById('mlmp_multi');
@@ -90,7 +73,7 @@
 	// --- HEADER GLOBAL ---
 	var outerHdr = document.createElement('div');
 	outerHdr.style.cssText = 'background:' + S.sf + ';border-bottom:1px solid ' + S.bd + ';padding:9px 14px;display:flex;align-items:center;justify-content:space-between;cursor:move;user-select:none;flex-shrink:0';
-	outerHdr.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><div style="width:9px;height:9px;border-radius:50%;background:' + S.ac + ';box-shadow:0 0 8px ' + S.ac + '"></div><div><div style="font-weight:600;font-size:13px;letter-spacing:.5px">MONITOR LAST MILE <span style="color:' + S.ac + ';font-size:11px">MULTI ESTAÇÕES</span></div><div style="font-size:10px;color:' + S.mt + ';font-family:' + mn + '">envios.adminml.com</div></div></div><div style="display:flex;align-items:center;gap:4px"><span id="mlmm_ts" style="font-family:' + mn + ';font-size:10px;color:' + S.mt + ';margin-right:6px">--</span><button id="mlmm_min" title="Minimizar" style="background:transparent;border:1px solid ' + S.bd + ';color:#ffab40;width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:13px;line-height:1">&#8212;</button><button id="mlmm_max" title="Maximizar" style="background:transparent;border:1px solid ' + S.bd + ';color:#00d4ff;width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:13px;line-height:1">&#9643;</button><button id="mlmm_close" style="background:transparent;border:1px solid ' + S.bd + ';color:' + S.mt + ';width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:14px;line-height:1">&#10005;</button></div>';
+	outerHdr.innerHTML = '<div style="display:flex;align-items:center;gap:10px"><div style="width:9px;height:9px;border-radius:50%;background:' + S.ac + ';box-shadow:0 0 8px ' + S.ac + '"></div><div><div style="font-weight:600;font-size:13px;letter-spacing:.5px">[MeGaMente] MONITOR LAST MILE <span style="color:' + S.ac + ';font-size:11px">MULTI ESTAÇÕES</span></div><div style="font-size:10px;color:' + S.mt + ';font-family:' + mn + '">Criado por Geraldo, compartilhado por Carlinhos (Mega Mente)</div></div></div><div style="display:flex;align-items:center;gap:4px"><span id="mlmm_ts" style="font-family:' + mn + ';font-size:10px;color:' + S.mt + ';margin-right:6px">--</span><button id="mlmm_min" title="Minimizar" style="background:transparent;border:1px solid ' + S.bd + ';color:#ffab40;width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:13px;line-height:1">&#8212;</button><button id="mlmm_max" title="Maximizar" style="background:transparent;border:1px solid ' + S.bd + ';color:#00d4ff;width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:13px;line-height:1">&#9643;</button><button id="mlmm_close" style="background:transparent;border:1px solid ' + S.bd + ';color:' + S.mt + ';width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:14px;line-height:1">&#10005;</button></div>';
 
 	// --- TOOLBAR GLOBAL ---
 	var outerCtrl = document.createElement('div');

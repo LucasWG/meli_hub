@@ -31,9 +31,9 @@
 		},
 		{
 			"id": "mlm_multi",
-			"name": "Monitor Last Mile - Multi Estações",
-			"description": "Painel avançado para monitoramento simultâneo de múltiplas estações, rotas, insucessos, PNR e devoluções.",
-			"version": "1.4.1",
+			"name": "[MeGaMente] Monitor Last Mile - Multi Estações",
+			"description": "Painel avançado para monitoramento. Criado por Geraldo, compartilhado por Carlinhos (Mega Mente).",
+			"version": "1.4.4",
 			"file": "mlm_multi.js",
 			"required": false,
 			"icon": "📦"
