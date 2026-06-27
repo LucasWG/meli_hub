@@ -1,5 +1,5 @@
 {
-	"hub_version": "3.2.1",
+	"hub_version": "3.2.4",
 	"plugins": [
 		{
 			"id": "qr_printer",

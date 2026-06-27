@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MELI HUB - Gerenciador de Scripts
 // @namespace    https://github.com/LucasRepML/meli_hub
-// @version      3.2.0
+// @version      3.2.4
 // @description  Hub profissional para plugins do repositório meli_hub (Estilo ML, Suporte SPA, CSP Bypass e Anti-Cache)
 // @author       LucasWG
 // @match        *://*/*
@@ -22,7 +22,7 @@
 	'use strict';
 
 	// ===== CONFIGURAÇÕES =====
-	const HUB_VERSION = '3.2.0';
+	const HUB_VERSION = '3.2.4';
 	const REPO_RAW = 'https://raw.githubusercontent.com/LucasRepML/meli_hub/main/';
 	const MANIFEST_URL = REPO_RAW + 'manifest.json';
 	const HUB_SCRIPT_URL = REPO_RAW + 'meli_hub.user.js';
