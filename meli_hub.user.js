@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MELI HUB - Gerenciador de Scripts
 // @namespace    https://github.com/LucasRepML/meli_hub
-// @version      3.3.0
+// @version      3.3.3
 // @description  Hub profissional para plugins do repositório meli_hub (Estilo ML, Suporte SPA, CSP Bypass e Anti-Cache)
 // @author       LucasWG
 // @match        *://*/*
@@ -24,7 +24,7 @@
 	'use strict';
 
 	// ===== CONFIGURAÇÕES =====
-	const HUB_VERSION = '3.3.1';
+	const HUB_VERSION = '3.3.3';
 	const REPO_RAW = 'http://127.0.0.1:5500/';
 	// const REPO_RAW = 'https://raw.githubusercontent.com/LucasRepML/meli_hub/main/';
 	const MANIFEST_URL = REPO_RAW + 'manifest.json';
@@ -276,9 +276,10 @@
 		}
 	}
 
-	async function loadEnabledPlugins() {
+	async function loadEnabledPlugins(outdated = false) {
 		if (!manifestData.plugins || !manifestData.plugins.length) return;
 		for (const plugin of manifestData.plugins) {
+			if (outdated && !plugin.run_when_outdated) continue;
 			if (plugin.required || enabledPlugins[plugin.id]) {
 				try {
 					await ensurePluginReady(plugin);
@@ -341,6 +342,17 @@
 						statusBadge.className = 'status-badge status-updated';
 						statusBadge.textContent = 'Em dia';
 					}
+					// Atualiza a data no DOM
+					const meta = getMeta(plugin.id);
+					const dateStr = meta && meta.lastUpdated ? new Date(meta.lastUpdated).toLocaleString('pt-BR') : 'Nunca';
+					const detailItems = itemEl.querySelectorAll('.detail-item');
+					detailItems.forEach(el => {
+						if (el.textContent.includes('Atualizado:')) {
+							el.innerHTML = `Atualizado: <span>${dateStr}</span>`;
+						}
+					});
+
+					reorderListWithAnimation();
 				}
 			}
 		});
@@ -365,12 +377,73 @@
 		return 'pending';
 	}
 
+	function reorderListWithAnimation() {
+		const listContainer = document.querySelector('.plugin-list');
+		if (!listContainer) return;
+
+		const items = Array.from(listContainer.children);
+		if (items.length <= 1) return;
+
+		// 1. First
+		const firstPositions = new Map();
+		items.forEach(item => {
+			firstPositions.set(item.id, item.getBoundingClientRect().top);
+		});
+
+		// 2. Reorder in DOM
+		items.sort((a, b) => {
+			const idA = a.id.replace('plugin-item-', '');
+			const idB = b.id.replace('plugin-item-', '');
+			const metaA = getMeta(idA);
+			const metaB = getMeta(idB);
+			const timeA = metaA && metaA.lastUpdated ? metaA.lastUpdated : 0;
+			const timeB = metaB && metaB.lastUpdated ? metaB.lastUpdated : 0;
+			return timeB - timeA;
+		});
+
+		items.forEach(item => listContainer.appendChild(item));
+
+		// 3. Last & Invert
+		items.forEach(item => {
+			const firstTop = firstPositions.get(item.id);
+			const lastTop = item.getBoundingClientRect().top;
+			const deltaY = firstTop - lastTop;
+
+			if (deltaY !== 0) {
+				item.style.transition = 'none';
+				item.style.transform = `translateY(${deltaY}px)`;
+			}
+		});
+
+		// 4. Play
+		requestAnimationFrame(() => {
+			listContainer.offsetHeight; // force reflow
+			items.forEach(item => {
+				item.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+				item.style.transform = '';
+			});
+			setTimeout(() => {
+				items.forEach(item => {
+					if (item.style.transform === '') item.style.transition = '';
+				});
+			}, 400);
+		});
+	}
+
 	function renderModal() {
 		const modal = document.getElementById('meli-hub-modal');
 		if (!modal) return;
 		const listContainer = modal.querySelector('.plugin-list');
 
 		const optionalPlugins = manifestData.plugins.filter(p => !p.required);
+		optionalPlugins.sort((a, b) => {
+			const metaA = getMeta(a.id);
+			const metaB = getMeta(b.id);
+			const timeA = metaA && metaA.lastUpdated ? metaA.lastUpdated : 0;
+			const timeB = metaB && metaB.lastUpdated ? metaB.lastUpdated : 0;
+			return timeB - timeA;
+		});
+		
 		const activeCount = optionalPlugins.filter(p => enabledPlugins[p.id]).length;
 
 		listContainer.innerHTML = '';
@@ -381,10 +454,10 @@
 			const meta = getMeta(plugin.id);
 			const statusText = status === 'updated' ? 'Em dia' : (status === 'new' ? 'Novo' : 'Atualizar');
 			const lastUpdated = meta && meta.lastUpdated ? new Date(meta.lastUpdated).toLocaleString('pt-BR') : 'Nunca';
-			const initial = plugin.name.charAt(0).toUpperCase();
+			const initial = plugin.icon || plugin.name.charAt(0).toUpperCase();
 
 			const item = document.createElement('div');
-			item.className = 'plugin-item' + (isHubOutdated ? ' disabled' : '');
+			item.className = 'plugin-item' + ((isHubOutdated && !plugin.run_when_outdated) ? ' disabled' : '');
 			item.id = `plugin-item-${plugin.id}`;
 			item.innerHTML = `
 					<div class="plugin-icon-container">
@@ -603,11 +676,10 @@
 
 			}
 
-			if (!isHubOutdated) {
-				loadEnabledPlugins();
-			} else {
+			if (isHubOutdated) {
 				showToast('Plugins bloqueados até a atualização do Hub.', 'error', 5000);
 			}
+			loadEnabledPlugins(isHubOutdated);
 		});
 	}
 

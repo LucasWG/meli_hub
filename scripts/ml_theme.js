@@ -1,5 +1,5 @@
 (function () {
-	// Versão: v1.0.1
+	// Versão: v1.0.2
 	'use strict';
 
 	if (window.MeliThemeInit) return;

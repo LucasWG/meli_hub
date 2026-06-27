@@ -1,13 +1,15 @@
 {
-	"hub_version": "3.3.1",
+	"hub_version": "3.3.3",
 	"plugins": [
 		{
 			"id": "ml_theme",
 			"name": "Tema Global do Hub",
 			"description": "Estilos globais, notificações e componentes UI padronizados para todos os plugins.",
-			"version": "1.0.1",
+			"version": "1.0.2",
 			"file": "ml_theme.js",
-			"required": true
+			"required": true,
+			"run_when_outdated": true,
+			"icon": "🎨"
 		},
 		{
 			"id": "qr_printer",
@@ -15,7 +17,8 @@
 			"description": "Atalhos de Impressão: Alt+P imprime pelo sistema; Alt+I seleciona impressora local.",
 			"version": "2.3.1",
 			"file": "qr_printer.js",
-			"required": false
+			"required": false,
+			"icon": "🖨️"
 		},
 		{
 			"id": "mt_quick_nav",
@@ -23,7 +26,8 @@
 			"description": "Digite 11 números em qualquer lugar da tela ou cole (Ctrl+V) um ID para navegar instantaneamente.",
 			"version": "1.2.1",
 			"file": "mt_quick_nav.js",
-			"required": false
+			"required": false,
+			"icon": "⌨️"
 		},
 		{
 			"id": "mlm_multi",
@@ -31,7 +35,8 @@
 			"description": "Painel avançado para monitoramento simultâneo de múltiplas estações, rotas, insucessos, PNR e devoluções.",
 			"version": "1.4.1",
 			"file": "mlm_multi.js",
-			"required": false
+			"required": false,
+			"icon": "📦"
 		},
 		{
 			"id": "mt_batch_processor",
@@ -39,7 +44,8 @@
 			"description": "Ferramenta para aplicar status em lote a múltiplos pacotes usando atalho Alt+Q.",
 			"version": "1.2.1",
 			"file": "mt_batch_processor.js",
-			"required": false
+			"required": false,
+			"icon": "⚡"
 		}
 	]
 }
