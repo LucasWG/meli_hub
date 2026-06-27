@@ -5,7 +5,7 @@
 			"id": "ml_theme",
 			"name": "Tema Global do Hub",
 			"description": "Estilos globais, notificações e componentes UI padronizados para todos os plugins.",
-			"version": "1.0.0",
+			"version": "1.0.1",
 			"file": "ml_theme.js",
 			"required": true
 		},

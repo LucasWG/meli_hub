@@ -1,5 +1,5 @@
 (function () {
-	// Versão: v1.0.0
+	// Versão: v1.0.1
 	'use strict';
 
 	if (window.MeliThemeInit) return;
@@ -258,15 +258,8 @@
 		.footer-btns button.action:hover { background: #008f45; box-shadow: 0 4px 8px rgba(0,166,80,0.5); transform: translateY(-1px); }
 	`;
 
-	const styleEl = document.createElement('style');
-	styleEl.id = 'ml-theme-style';
-	styleEl.textContent = CSS;
-	
-	if (document.head) {
-		document.head.appendChild(styleEl);
-	} else {
-		document.addEventListener('DOMContentLoaded', () => document.head.appendChild(styleEl));
-	}
+	// Solicita ao Hub para injetar o CSS (contorna o CSP do Mercado Livre)
+	window.dispatchEvent(new CustomEvent('meli-hub:add-style', { detail: { css: CSS } }));
 
 	const MAX_TOASTS = 3;
 	let activeToasts = [];

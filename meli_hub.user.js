@@ -215,6 +215,13 @@
 		});
 	}
 
+	// ===== EVENT BRIDGE =====
+	window.addEventListener('meli-hub:add-style', (e) => {
+		if (e.detail && e.detail.css) {
+			GM_addStyle(e.detail.css);
+		}
+	});
+
 	// ===== CORE & EXECUÇÃO =====
 	function getCacheKey(pluginId) { return CACHE_PREFIX + pluginId; }
 	function getMetaKey(pluginId) { return META_PREFIX + pluginId; }
