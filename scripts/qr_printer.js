@@ -118,22 +118,22 @@
 		`;
 
 		Object.assign(toast.style, {
-			position: 'fixed', bottom: '32px', right: '32px', zIndex: '999999',
+			position: 'fixed', top: '24px', left: '50%', zIndex: '999999',
 			padding: '16px 24px', background: 'rgba(17, 24, 39, 0.95)',
 			backdropFilter: 'blur(10px)', color: '#F9FAFB', fontSize: '15px',
 			borderRadius: '16px', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
 			border: '1px solid rgba(255, 255, 255, 0.1)', opacity: '0',
-			transform: 'translateY(20px) scale(0.95)', transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+			transform: 'translate(-50%, -20px) scale(0.95)', transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
 			fontFamily: 'system-ui, -apple-system, sans-serif'
 		});
 
 		document.body.appendChild(toast);
 		requestAnimationFrame(() => {
-			toast.style.opacity = '1'; toast.style.transform = 'translateY(0) scale(1)';
+			toast.style.opacity = '1'; toast.style.transform = 'translate(-50%, 0) scale(1)';
 		});
 
 		setTimeout(() => {
-			toast.style.opacity = '0'; toast.style.transform = 'translateY(10px) scale(0.95)';
+			toast.style.opacity = '0'; toast.style.transform = 'translate(-50%, -20px) scale(0.95)';
 		}, 3200);
 		setTimeout(() => toast.remove(), 3600);
 	}

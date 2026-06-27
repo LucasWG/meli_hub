@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MELI HUB - Gerenciador de Scripts
 // @namespace    https://github.com/LucasRepML/meli_hub
-// @version      3.2.0
+// @version      3.2.1
 // @description  Hub profissional para plugins do repositório meli_hub (Estilo ML, Suporte SPA, CSP Bypass e Anti-Cache)
 // @author       Você
 // @match        *://*/*
@@ -22,7 +22,7 @@
 	'use strict';
 
 	// ===== CONFIGURAÇÕES =====
-	const HUB_VERSION = '3.2.0';
+	const HUB_VERSION = '3.2.1';
 	const REPO_RAW = 'https://raw.githubusercontent.com/LucasRepML/meli_hub/main/';
 	const MANIFEST_URL = REPO_RAW + 'manifest.json';
 	const HUB_SCRIPT_URL = REPO_RAW + 'meli_hub.user.js';
@@ -32,15 +32,15 @@
 
 	// ===== GREETINGS =====
 	const GREETINGS_PREFIXES = [
-		'Olá', 'Oi', 'Bem-vindo(a) de volta', 'Que bom te ver', 'Saudações', 
+		'Olá', 'Oi', 'Bem-vindo(a) de volta', 'Que bom te ver', 'Saudações',
 		'Tudo pronto por aqui', 'Vamos nessa', 'Preparado(a)', 'Excelente dia', 'Firme e forte',
 		'E aí', 'Muito bom te ver', 'Prontos para mais', 'Tudo em ordem', 'Sempre em frente'
 	];
 	const GREETINGS_SUFFIXES = [
-		'! Pronto para arrasar?', '! Vamos fazer acontecer?', '. Espero que seu dia seja ótimo!', 
-		'! Mais um dia de sucesso!', '. Estamos juntos nessa!', '! Que seu dia seja produtivo.', 
+		'! Pronto para arrasar?', '! Vamos fazer acontecer?', '. Espero que seu dia seja ótimo!',
+		'! Mais um dia de sucesso!', '. Estamos juntos nessa!', '! Que seu dia seja produtivo.',
 		'. Bora pra cima!', '. Conte com o Hub!', '! Tudo otimizado para você.', '. Vamos automatizar!',
-		'! O dever nos chama.', '. Missão dada é missão cumprida!', '! Facilidade e agilidade garantidas.', 
+		'! O dever nos chama.', '. Missão dada é missão cumprida!', '! Facilidade e agilidade garantidas.',
 		'. Vamos com tudo!', '! Hub 100% carregado e pronto.'
 	];
 
@@ -49,7 +49,7 @@
 		let period = "Bom dia";
 		if (time >= 12 && time < 18) period = "Boa tarde";
 		else if (time >= 18) period = "Boa noite";
-		
+
 		const usePeriod = Math.random() > 0.5;
 		const prefix = usePeriod ? period : GREETINGS_PREFIXES[Math.floor(Math.random() * GREETINGS_PREFIXES.length)];
 		const suffix = GREETINGS_SUFFIXES[Math.floor(Math.random() * GREETINGS_SUFFIXES.length)];
@@ -118,50 +118,51 @@
         /* ========== TOASTS INTELIGENTES ========== */
         #meli-toast-container {
             position: fixed;
-            bottom: 24px;
-            right: 24px;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
             z-index: 1000001;
             display: flex;
             flex-direction: column;
             gap: 12px;
             pointer-events: none;
-            align-items: flex-end;
+            align-items: center;
         }
         .meli-toast {
             background: var(--ml-white);
             color: var(--ml-text-main);
-            border-left: 4px solid var(--ml-blue);
-            padding: 16px 20px;
-            border-radius: 8px;
-            box-shadow: var(--ml-shadow-md);
+            border-left: 5px solid var(--ml-blue);
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: var(--ml-shadow-lg);
             font-family: var(--ml-font);
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 500;
-            min-width: 280px;
-            max-width: 400px;
+            min-width: 300px;
+            max-width: 450px;
             display: flex;
             align-items: center;
             gap: 14px;
-            animation: meli-slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            transition: all 0.3s ease;
+            animation: meli-slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             pointer-events: auto;
         }
         .meli-toast.success { border-left-color: var(--ml-green); }
         .meli-toast.error   { border-left-color: var(--ml-red); }
         .meli-toast.info    { border-left-color: var(--ml-blue); }
-        .meli-toast-icon { font-size: 20px; flex-shrink: 0; }
+        .meli-toast-icon { font-size: 22px; flex-shrink: 0; }
         
         .meli-toast.hiding {
-            animation: meli-slideOut 0.3s ease forwards;
+            animation: meli-slideOutUp 0.3s ease forwards;
         }
 
-        @keyframes meli-slideIn {
-            from { opacity: 0; transform: translateX(60px) scale(0.9); }
-            to { opacity: 1; transform: translateX(0) scale(1); }
+        @keyframes meli-slideDown {
+            from { opacity: 0; transform: translateY(-40px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        @keyframes meli-slideOut {
-            from { opacity: 1; transform: translateX(0) scale(1); }
-            to { opacity: 0; transform: translateX(60px) scale(0.9); }
+        @keyframes meli-slideOutUp {
+            from { opacity: 1; transform: translateY(0) scale(1); }
+            to { opacity: 0; transform: translateY(-40px) scale(0.9); }
         }
 
         /* ========== MODAL PROFISSIONAL ========== */
@@ -267,17 +268,17 @@
             display: flex; align-items: center; gap: 12px; margin-bottom: 6px;
         }
         .plugin-desc { font-size: 14px; color: var(--ml-text-muted); line-height: 1.5; margin-bottom: 14px; }
-        
+
         .plugin-details {
             display: flex; flex-wrap: wrap; gap: 12px 24px; font-size: 13px; color: var(--ml-text-light);
             background: rgba(0,0,0,0.02); padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.04);
         }
         .plugin-details .detail-item { display: flex; align-items: center; gap: 6px; font-weight: 500; }
         .plugin-details .detail-item span { color: var(--ml-text-muted); font-weight: 600; }
-        
-        .plugin-action { 
-            display: flex; align-items: center; justify-content: center; 
-            padding-left: 20px; border-left: 1px solid var(--ml-border); 
+
+        .plugin-action {
+            display: flex; align-items: center; justify-content: center;
+            padding-left: 20px; border-left: 1px solid var(--ml-border);
         }
 
         /* Badges de Status */
@@ -322,10 +323,10 @@
             background: rgba(65,137,230,.1); color: var(--ml-blue);
         }
         .footer-btns button.secondary:hover { background: rgba(65,137,230,.2); }
-        
+
         .footer-btns button.primary { background: var(--ml-blue); color: var(--ml-white); box-shadow: 0 2px 4px rgba(52,131,250,0.4); }
         .footer-btns button.primary:hover { background: var(--ml-blue-hover); box-shadow: 0 4px 8px rgba(52,131,250,0.5); transform: translateY(-1px); }
-        
+
         .footer-btns button.action { background: var(--ml-green); color: var(--ml-white); box-shadow: 0 2px 4px rgba(0,166,80,0.4); }
         .footer-btns button.action:hover { background: #008f45; box-shadow: 0 4px 8px rgba(0,166,80,0.5); transform: translateY(-1px); }
     `);
@@ -346,7 +347,7 @@
 		const toast = document.createElement('div');
 		toast.className = `meli-toast ${type}`;
 		toast.innerHTML = `<span class="meli-toast-icon">${icons[type] || '🔔'}</span><span>${message}</span>`;
-		
+
 		container.appendChild(toast);
 		activeToasts.push(toast);
 
@@ -555,10 +556,10 @@
 		const modal = document.getElementById('meli-hub-modal');
 		if (!modal) return;
 		const listContainer = modal.querySelector('.plugin-list');
-		
+
 		const optionalPlugins = manifestData.plugins.filter(p => !p.required);
 		const activeCount = optionalPlugins.filter(p => enabledPlugins[p.id]).length;
-		
+
 		listContainer.innerHTML = '';
 
 		optionalPlugins.forEach(plugin => {
@@ -630,7 +631,7 @@
                 <strong>${activeCount} ativos</strong>
             `;
 		}
-		
+
 		// Atualiza botão de update se houver atualização pendente para o Hub
 		const updateBtn = modal.querySelector('#meli-hub-update-hub');
 		if (updateBtn) {
@@ -645,10 +646,10 @@
 			const savedName = GM_getValue('cachedUserName', 'Usuário');
 			const immediateName = getUserName();
 			currentGreeting = getRandomGreeting(immediateName || savedName);
-			
+
 			modal.classList.add('open');
 			renderModal();
-			
+
 			// Se não pegou síncrono, tenta atualizar assincronamente (em background)
 			if (!immediateName) {
 				getAsyncUserName(2500).then(asyncName => {
@@ -658,10 +659,10 @@
 					}
 				});
 			}
-			
+
 			// Auto check for plugin updates when modal opens
 			updateAllEnabledPlugins(true).then(count => {
-				if(count > 0) renderModal();
+				if (count > 0) renderModal();
 			});
 		}
 	}
@@ -730,7 +731,7 @@
 			progressContainer.style.display = 'block';
 
 			const count = await updateAllEnabledPlugins(false);
-			
+
 			if (count === 0) {
 				showToast('Todos os plugins já estão na versão mais recente.', 'info');
 			} else {
@@ -775,13 +776,13 @@
 	// ===== INIT =====
 	async function init() {
 		manifestData = await fetchManifest();
-		
+
 		whenBody(() => {
 			injectRouteInterceptor();
 			buildUI();
-			
+
 			const isFirstRun = !GM_getValue('firstRunDone', false);
-			
+
 			if (isFirstRun) {
 				// Lógica da primeira vez
 				setTimeout(async () => {
@@ -803,7 +804,7 @@
 						GM_openInTab(HUB_SCRIPT_URL, { active: true });
 					}, 2000);
 				}
-				
+
 				// Checa atualizações de plugins habilitados
 				const pluginsToUpdate = manifestData.plugins.filter(p => p.required || enabledPlugins[p.id]);
 				let hasPluginUpdate = false;
@@ -814,7 +815,7 @@
 						break;
 					}
 				}
-				
+
 				if (hasPluginUpdate && !hasHubUpdate) {
 					// Abre modal automaticamente para atualizar
 					openModal();
