@@ -1,6 +1,6 @@
 (function () {
 	// ===== MONITOR LAST MILE — MULTI ESTAÇÕES =====
-	// Versão: v1.0 (base: v11.19)
+	// Versão: v1.2.1 (base: v11.19)
 	// Guard clause: remove se já existir
 	if (document.getElementById('mlmp_multi')) {
 		document.getElementById('mlmp_multi').remove();
@@ -3984,5 +3984,12 @@
 		// Iniciar fila sequencial
 		runQueue();
 	};
+
+	window.addEventListener('meli-hub:plugin-disabled', function (e) {
+		if (e.detail && e.detail.pluginId === 'mlm_multi') {
+			var panel = document.getElementById('mlmp_multi');
+			if (panel) panel.remove();
+		}
+	});
 
 })();

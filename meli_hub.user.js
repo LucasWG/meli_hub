@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MELI HUB - Gerenciador de Scripts
 // @namespace    https://github.com/LucasRepML/meli_hub
-// @version      3.2.4
+// @version      3.2.5
 // @description  Hub profissional para plugins do repositório meli_hub (Estilo ML, Suporte SPA, CSP Bypass e Anti-Cache)
 // @author       LucasWG
 // @match        *://*/*
@@ -12,6 +12,7 @@
 // @grant        GM_addElement
 // @grant        unsafeWindow
 // @grant        GM_openInTab
+// @grant        GM_addValueChangeListener
 // @connect      raw.githubusercontent.com
 // @connect      github.com
 // @sandbox      JavaScript
@@ -22,7 +23,7 @@
 	'use strict';
 
 	// ===== CONFIGURAÇÕES =====
-	const HUB_VERSION = '3.2.4';
+	const HUB_VERSION = '3.2.5';
 	const REPO_RAW = 'https://raw.githubusercontent.com/LucasRepML/meli_hub/main/';
 	const MANIFEST_URL = REPO_RAW + 'manifest.json';
 	const HUB_SCRIPT_URL = REPO_RAW + 'meli_hub.user.js';
@@ -186,7 +187,7 @@
 				display: flex;
 				flex-direction: column;
 				width: 95%;
-				max-width: 800px;
+				max-width: 1100px;
 				max-height: 85vh;
 				box-shadow: var(--ml-shadow-lg);
 				font-family: var(--ml-font);
@@ -479,7 +480,8 @@
 	function getMeta(pluginId) { return GM_getValue(getMetaKey(pluginId), null); }
 
 	async function fetchAndCachePlugin(plugin) {
-		const url = REPO_RAW + plugin.file;
+		const path = plugin.file.includes('/') ? plugin.file : 'scripts/' + plugin.file;
+		const url = REPO_RAW + path;
 		const code = await gmFetch(url);
 		GM_setValue(getCacheKey(plugin.id), JSON.stringify({ code: code, version: plugin.version }));
 		saveMeta(plugin.id, plugin.version);
@@ -488,7 +490,7 @@
 
 	function executePlugin(code, pluginId) {
 		try {
-			GM_addElement('script', { textContent: code });
+			GM_addElement('script', { id: 'meli-plugin-' + pluginId, textContent: code });
 		} catch (e1) {
 			try {
 				unsafeWindow.eval(code);
@@ -632,7 +634,10 @@
 						}
 					}
 				} else {
-					showToast(`Plugin desativado (F5 para limpar da tela)`, 'info');
+					const scriptEl = document.getElementById('meli-plugin-' + pluginId);
+					if (scriptEl) scriptEl.remove();
+					window.dispatchEvent(new CustomEvent('meli-hub:plugin-disabled', { detail: { pluginId: pluginId } }));
+					showToast(`Plugin desativado`, 'info');
 				}
 				renderModal();
 			});
@@ -749,7 +754,7 @@
 		// Eventos dos botões do footer
 		modal.querySelector('#meli-hub-update-hub').addEventListener('click', function () {
 			showToast('Baixando nova versão do MELI HUB...', 'info');
-			GM_openInTab(HUB_SCRIPT_URL, { active: true });
+			GM_openInTab(HUB_SCRIPT_URL + '?t=' + Date.now(), { active: true });
 		});
 
 		modal.querySelector('#meli-hub-update-all').addEventListener('click', async function () {
@@ -761,16 +766,18 @@
 
 			if (count === 0) {
 				showToast('Todos os plugins já estão na versão mais recente.', 'info');
+				progressBar.style.width = '100%';
+				setTimeout(() => {
+					progressContainer.style.display = 'none';
+					progressBar.style.width = '0%';
+				}, 1500);
+				renderModal();
 			} else {
-				showToast(`${count} plugin(s) sincronizados com sucesso!`, 'success');
+				showToast(`${count} plugin(s) sincronizados com sucesso! Recarregando abas...`, 'success');
+				progressBar.style.width = '100%';
+				GM_setValue('meliHubForceReload', Date.now());
+				setTimeout(() => window.location.reload(), 1500);
 			}
-
-			progressBar.style.width = '100%';
-			setTimeout(() => {
-				progressContainer.style.display = 'none';
-				progressBar.style.width = '0%';
-			}, 1500);
-			renderModal();
 		});
 
 		modal.querySelector('#meli-hub-refresh').addEventListener('click', async function () {
@@ -805,6 +812,10 @@
 		manifestData = await fetchManifest();
 
 		whenBody(() => {
+			GM_addValueChangeListener('meliHubForceReload', (key, oldValue, newValue, remote) => {
+				if (remote) window.location.reload();
+			});
+
 			injectRouteInterceptor();
 			buildUI();
 
@@ -830,21 +841,7 @@
 					openModal();
 				}
 
-				// Checa atualizações de plugins habilitados
-				const pluginsToUpdate = manifestData.plugins.filter(p => p.required || enabledPlugins[p.id]);
-				let hasPluginUpdate = false;
-				for (const plugin of pluginsToUpdate) {
-					const meta = getMeta(plugin.id);
-					if (!meta || meta.version !== plugin.version) {
-						hasPluginUpdate = true;
-						break;
-					}
-				}
 
-				if (hasPluginUpdate && !hasHubUpdate) {
-					// Abre modal automaticamente para atualizar
-					openModal();
-				}
 			}
 
 			if (!isHubOutdated) {

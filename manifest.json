@@ -1,5 +1,5 @@
 {
-	"hub_version": "3.2.4",
+	"hub_version": "3.2.5",
 	"plugins": [
 		{
 			"id": "qr_printer",
@@ -21,7 +21,7 @@
 			"id": "mlm_multi",
 			"name": "Monitor Last Mile - Multi Estações",
 			"description": "Painel avançado para monitoramento simultâneo de múltiplas estações, rotas, insucessos, PNR e devoluções.",
-			"version": "1.1.0",
+			"version": "1.2.1",
 			"file": "mlm_multi.js",
 			"required": false
 		}
