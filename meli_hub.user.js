@@ -24,7 +24,8 @@
 
 	// ===== CONFIGURAÇÕES =====
 	const HUB_VERSION = '3.3.0';
-	const REPO_RAW = 'https://raw.githubusercontent.com/LucasRepML/meli_hub/main/';
+	const REPO_RAW = 'http://127.0.0.1:5500/';
+	// const REPO_RAW = 'https://raw.githubusercontent.com/LucasRepML/meli_hub/main/';
 	const MANIFEST_URL = REPO_RAW + 'manifest.json';
 	const HUB_SCRIPT_URL = REPO_RAW + 'meli_hub.user.js';
 	const CACHE_PREFIX = 'plugin_cache_';
@@ -310,7 +311,7 @@
 		const updatePromises = pluginsToUpdate.map(async (plugin) => {
 			const itemEl = document.getElementById(`plugin-item-${plugin.id}`);
 			const ringEl = itemEl ? itemEl.querySelector('.plugin-progress-ring') : null;
-			
+
 			if (itemEl) itemEl.classList.add('updating');
 
 			try {
