@@ -1,5 +1,5 @@
 (function () {
-	// Versão: v1.1.0
+	// Versão: v1.1.1
 	'use strict';
 
 	if (window.MeliToolsBatchInit) return;
@@ -57,16 +57,26 @@
 			window.MeliToolsBatchInit = false;
 		},
 
+		allowedRoutes: [
+			'*/logistics/package-management/package/*'
+		],
+
+		matchRoute: function (url, pattern) {
+			if (pattern === '*') return true;
+			const regex = new RegExp('^' + pattern.replace(/[.+?^${}()|[\\]\\\\]/g, '\\\\$&').replace(/\\*/g, '.*') + '$', 'i');
+			return regex.test(url) || url.includes(pattern.replace(/\\*/g, ''));
+		},
+
 		checkRoute: function (url) {
-			if (url.includes('/logistics/package-management/package/')) {
+			if (this.allowedRoutes.some(p => this.matchRoute(url, p))) {
 				this.isRouteActive = true;
 				try {
 					const urlObj = new URL(url);
-					this.currentPackageId = urlObj.pathname.split('/').pop();
+					this.currentPackageId = urlObj.pathname.includes('/package/') ? urlObj.pathname.split('/').pop() : '';
 				} catch (e) {
-					this.currentPackageId = url.split('/').pop();
+					this.currentPackageId = url.includes('/package/') ? url.split('/').pop() : '';
 				}
-				console.log(`[Batch Processor] Ativo na página do pacote: ${this.currentPackageId}`);
+				console.log(`[Batch Processor] Ativo (Rota Permitida). Package ID: ${this.currentPackageId || 'N/A'}`);
 			} else {
 				this.isRouteActive = false;
 				this.currentPackageId = '';

@@ -272,10 +272,20 @@
 				transform: translateY(-2px);
 				border-color: rgba(52, 131, 250, 0.3);
 			}
+			.plugin-icon-container { position: relative; flex-shrink: 0; align-self: flex-start; display: flex; align-items: center; justify-content: center; }
+			.plugin-progress-ring {
+				position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px;
+				border-radius: 50%;
+				background: conic-gradient(var(--ml-green) var(--progress, 0%), transparent 0);
+				opacity: 0; pointer-events: none; transition: opacity 0.3s;
+				-webkit-mask: radial-gradient(closest-side, transparent 80%, black 82%);
+				mask: radial-gradient(closest-side, transparent 80%, black 82%);
+			}
+			.plugin-item.updating .plugin-progress-ring { opacity: 1; }
 			.plugin-icon {
 				width: 54px; height: 54px; background: rgba(52,131,250,0.1); color: var(--ml-blue);
-				border-radius: 12px; display: flex; align-items: center; justify-content: center;
-				font-size: 24px; font-weight: bold; flex-shrink: 0; align-self: flex-start;
+				border-radius: 50%; display: flex; align-items: center; justify-content: center;
+				font-size: 24px; font-weight: bold;
 			}
 			.plugin-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
 			.plugin-name {
@@ -320,14 +330,7 @@
 				padding: 20px 28px; border-top: 1px solid var(--ml-border);
 				display: flex; flex-direction: column; gap: 16px;
 			}
-			.progress-container {
-				height: 6px; background: var(--ml-bg); border-radius: 6px; overflow: hidden;
-				display: none;
-			}
-			.progress-bar {
-				height: 100%; width: 0%; background: var(--ml-blue);
-				transition: width 0.3s ease;
-			}
+
 			.footer-btns { display: flex; gap: 16px; }
 			.footer-btns button {
 				flex: 1; padding: 14px; border: none; border-radius: 6px;
@@ -406,7 +409,7 @@
 	}
 
 	// ===== ANTI-CACHE FETCH =====
-	function gmFetch(url) {
+	function gmFetch(url, onProgress) {
 		const cacheBusterUrl = url + (url.includes('?') ? '&' : '?') + 't=' + fetchSeed;
 		console.log('DEBUG - gmFetch', cacheBusterUrl);
 		return new Promise((resolve, reject) => {
@@ -418,6 +421,11 @@
 					'Cache-Control': 'no-cache, no-store, must-revalidate',
 					'Pragma': 'no-cache',
 					'Expires': '0'
+				},
+				onprogress: (e) => {
+					if (onProgress && e.lengthComputable && e.total > 0) {
+						onProgress((e.loaded / e.total) * 100);
+					}
 				},
 				onload: (res) => {
 					if (res.status >= 200 && res.status < 300) resolve(res.responseText);
@@ -480,10 +488,10 @@
 
 	function getMeta(pluginId) { return GM_getValue(getMetaKey(pluginId), null); }
 
-	async function fetchAndCachePlugin(plugin) {
+	async function fetchAndCachePlugin(plugin, onProgress) {
 		const path = plugin.file.includes('/') ? plugin.file : 'scripts/' + plugin.file;
 		const url = REPO_RAW + path;
-		const code = await gmFetch(url);
+		const code = await gmFetch(url, onProgress);
 		GM_setValue(getCacheKey(plugin.id), JSON.stringify({ code: code, version: plugin.version }));
 		saveMeta(plugin.id, plugin.version);
 		return code;
@@ -543,24 +551,55 @@
 		return 0;
 	}
 
-	async function updateAllEnabledPlugins(showToasts = true) {
-		const pluginsToUpdate = manifestData.plugins.filter(p => p.required || enabledPlugins[p.id]);
+	async function autoUpdateOutdatedPlugins() {
+		// Atualiza todos os plugins que estão com versão diferente do manifest (novos ou desatualizados)
+		const pluginsToUpdate = manifestData.plugins.filter(p => {
+			const meta = getMeta(p.id);
+			return !meta || meta.version !== p.version;
+		});
+
 		let updatedCount = 0;
-		for (const plugin of pluginsToUpdate) {
-			const meta = getMeta(plugin.id);
-			if (!meta || meta.version !== plugin.version) {
-				try {
-					await fetchAndCachePlugin(plugin);
-					updatedCount++;
-				} catch (e) {
-					console.error(`[MELI-HUB] Erro ao atualizar ${plugin.id}:`, e);
+		let reloadedNeeded = false;
+
+		const updatePromises = pluginsToUpdate.map(async (plugin) => {
+			const itemEl = document.getElementById(`plugin-item-${plugin.id}`);
+			const ringEl = itemEl ? itemEl.querySelector('.plugin-progress-ring') : null;
+			
+			if (itemEl) itemEl.classList.add('updating');
+
+			try {
+				await fetchAndCachePlugin(plugin, (pct) => {
+					if (ringEl) ringEl.style.setProperty('--progress', pct + '%');
+				});
+				updatedCount++;
+				if (enabledPlugins[plugin.id] || plugin.required) {
+					reloadedNeeded = true;
+				}
+			} catch (e) {
+				console.error(`[MELI-HUB] Erro ao auto-atualizar ${plugin.id}:`, e);
+			} finally {
+				if (itemEl) {
+					itemEl.classList.remove('updating');
+					// Atualiza visualmente o status para "Em dia"
+					const statusBadge = itemEl.querySelector('.status-badge');
+					if (statusBadge) {
+						statusBadge.className = 'status-badge status-updated';
+						statusBadge.textContent = 'Em dia';
+					}
 				}
 			}
+		});
+
+		await Promise.all(updatePromises);
+
+		if (updatedCount > 0) {
+			showToast(`${updatedCount} plugin(s) atualizado(s) em background!`, 'success');
+			if (reloadedNeeded) {
+				showToast(`Recarregando abas para aplicar atualizações...`, 'info');
+				GM_setValue('meliHubForceReload', Date.now());
+				setTimeout(() => window.location.reload(), 1500);
+			}
 		}
-		if (showToasts && updatedCount > 0) {
-			showToast(`${updatedCount} plugin(s) atualizado(s) com sucesso!`, 'success');
-		}
-		return updatedCount;
 	}
 
 	// ===== UI BUILDING =====
@@ -591,8 +630,12 @@
 
 			const item = document.createElement('div');
 			item.className = 'plugin-item' + (isHubOutdated ? ' disabled' : '');
+			item.id = `plugin-item-${plugin.id}`;
 			item.innerHTML = `
-					<div class="plugin-icon">${initial}</div>
+					<div class="plugin-icon-container">
+						<div class="plugin-progress-ring"></div>
+						<div class="plugin-icon">${initial}</div>
+					</div>
 					<div class="plugin-info">
 						<div class="plugin-name">
 							${plugin.name}
@@ -600,15 +643,13 @@
 						</div>
 						<div class="plugin-desc">${plugin.description}</div>
 						<div class="plugin-details">
-							<div class="detail-item"><span>📦 Nuvem:</span> v${plugin.version}</div>
-							<div class="detail-item"><span>💾 Local:</span> ${meta ? 'v' + meta.version : '--'}</div>
-							<div class="detail-item"><span>🔄 Sincronizado:</span> ${lastUpdated}</div>
-							<div class="detail-item"><span>🔗 ID:</span> ${plugin.id}</div>
+							<div class="detail-item">Versão: <span>v${plugin.version}</span></div>
+							<div class="detail-item">Atualizado: <span>${lastUpdated}</span></div>
 						</div>
 					</div>
 					<div class="plugin-action">
-						<label class="toggle-switch">
-							<input type="checkbox" ${enabled ? 'checked' : ''} data-plugin-id="${plugin.id}">
+						<label class="toggle-switch" title="${enabled ? 'Desativar' : 'Ativar'} Plugin">
+							<input type="checkbox" class="plugin-toggle" data-plugin-id="${plugin.id}" ${enabled ? 'checked' : ''}>
 							<span class="slider"></span>
 						</label>
 					</div>
@@ -656,14 +697,11 @@
 
 		// Atualiza botões do footer se houver atualização pendente para o Hub
 		const updateBtn = modal.querySelector('#meli-hub-update-hub');
-		const refreshBtn = modal.querySelector('#meli-hub-refresh');
-		const syncBtn = modal.querySelector('#meli-hub-update-all');
+		const footer = modal.querySelector('#meli-hub-footer');
 
-		if (updateBtn) {
+		if (updateBtn && footer) {
 			const hasHubUpdate = compareVersions(manifestData.hub_version || HUB_VERSION, HUB_VERSION) > 0;
-			updateBtn.style.display = hasHubUpdate ? 'flex' : 'none';
-			if (refreshBtn) refreshBtn.style.display = hasHubUpdate ? 'none' : 'flex';
-			if (syncBtn) syncBtn.style.display = hasHubUpdate ? 'none' : 'flex';
+			footer.style.display = hasHubUpdate ? 'flex' : 'none';
 		}
 	}
 
@@ -689,8 +727,10 @@
 			}
 
 			// Auto check for plugin updates when modal opens
-			updateAllEnabledPlugins(true).then(count => {
-				if (count > 0) renderModal();
+			fetchManifest().then(data => {
+				manifestData = data;
+				renderModal();
+				autoUpdateOutdatedPlugins();
 			});
 		}
 	}
@@ -724,14 +764,9 @@
 						<div class="meli-hub-subtitle">Carregando plugins...</div>
 						<div class="plugin-list"></div>
 					</div>
-					<div class="meli-hub-footer">
-						<div class="progress-container" id="update-progress-container">
-							<div class="progress-bar" id="update-progress-bar"></div>
-						</div>
+					<div class="meli-hub-footer" id="meli-hub-footer" style="display:none;">
 						<div class="footer-btns">
-							<button id="meli-hub-update-hub" class="action" style="display:none;">🚀 Atualizar Hub</button>
-							<button id="meli-hub-refresh" class="secondary">↻ Atualizar Lista</button>
-							<button id="meli-hub-update-all" class="primary">⬇️ Sincronizar Plugins</button>
+							<button id="meli-hub-update-hub" class="action">🚀 Atualizar Hub</button>
 						</div>
 					</div>
 				</div>
@@ -757,39 +792,6 @@
 		modal.querySelector('#meli-hub-update-hub').addEventListener('click', function () {
 			showToast('Baixando nova versão do MELI HUB...', 'info');
 			GM_openInTab(HUB_SCRIPT_URL + '?t=' + Date.now(), { active: true });
-		});
-
-		modal.querySelector('#meli-hub-update-all').addEventListener('click', async function () {
-			const progressContainer = document.getElementById('update-progress-container');
-			const progressBar = document.getElementById('update-progress-bar');
-			progressContainer.style.display = 'block';
-
-			const count = await updateAllEnabledPlugins(false);
-
-			if (count === 0) {
-				showToast('Todos os plugins já estão na versão mais recente.', 'info');
-				progressBar.style.width = '100%';
-				setTimeout(() => {
-					progressContainer.style.display = 'none';
-					progressBar.style.width = '0%';
-				}, 1500);
-				renderModal();
-			} else {
-				showToast(`${count} plugin(s) sincronizados com sucesso! Recarregando abas...`, 'success');
-				progressBar.style.width = '100%';
-				GM_setValue('meliHubForceReload', Date.now());
-				setTimeout(() => window.location.reload(), 1500);
-			}
-		});
-
-		modal.querySelector('#meli-hub-refresh').addEventListener('click', async function () {
-			try {
-				manifestData = await fetchManifest();
-				renderModal();
-				showToast('Lista de plugins atualizada', 'success');
-			} catch (e) {
-				// Erro já tratado no fetchManifest
-			}
 		});
 	}
 

@@ -8,7 +8,9 @@
 	let isInitialized = false;
 
 	const LS_KEY = 'qrprinter_selected_printer';
-	const ROUTE_PATTERN = '/logistics/package-management/package/';
+	const ALLOWED_ROUTES = [
+		'*/logistics/package-management/package/*'
+	];
 
 	// =========================================================================
 	// TOKENS DE ELEMENTOS DO SITE
@@ -24,18 +26,22 @@
 	// =========================================================================
 	// CONTROLE DE ROTAS E INICIALIZAÇÃO
 	// =========================================================================
+	function matchRoute(url, pattern) {
+		if (pattern === '*') return true;
+		const regex = new RegExp('^' + pattern.replace(/[.+?^${}()|[\\]\\\\]/g, '\\\\$&').replace(/\\*/g, '.*') + '$', 'i');
+		return regex.test(url) || url.includes(pattern.replace(/\\*/g, ''));
+	}
+
 	function checkRoute(url) {
-		if (url.includes(ROUTE_PATTERN)) {
+		if (ALLOWED_ROUTES.some(p => matchRoute(url, p))) {
 			isRouteActive = true;
-			// Extrai o ID do pacote do final da URL
 			try {
 				const urlObj = new URL(url);
-				currentPackageId = urlObj.pathname.split('/').pop();
+				currentPackageId = urlObj.pathname.includes('/package/') ? urlObj.pathname.split('/').pop() : '';
 			} catch (e) {
-				// Fallback caso a URL seja passada de forma relativa
-				currentPackageId = url.split('/').pop();
+				currentPackageId = url.includes('/package/') ? url.split('/').pop() : '';
 			}
-			console.log(`[QR Printer] Ativo na página do pacote: ${currentPackageId}`);
+			console.log(`[QR Printer] Ativo (Rota Permitida). Package ID: ${currentPackageId || 'N/A'}`);
 		} else {
 			isRouteActive = false;
 			currentPackageId = '';

@@ -1,18 +1,27 @@
 (function () {
 	// ===== MONITOR LAST MILE — MULTI ESTAÇÕES =====
-	// Versão: v1.3.1 (base: v11.19)
+	// Versão: v1.3.2 (base: v11.19)
 	// Guard clause: remove se já existir
 	if (document.getElementById('mlmp_multi')) {
 		document.getElementById('mlmp_multi').remove();
 		return;
 	}
 
-	const ROUTE_PATTERN = '*';
+	const ALLOWED_ROUTES = [
+		'*'
+	];
+
 	let isRouteActive = false;
 	let currentPackageId = '';
 
+	function matchRoute(url, pattern) {
+		if (pattern === '*') return true;
+		const regex = new RegExp('^' + pattern.replace(/[.+?^${}()|[\\]\\\\]/g, '\\\\$&').replace(/\\*/g, '.*') + '$', 'i');
+		return regex.test(url) || url.includes(pattern.replace(/\\*/g, ''));
+	}
+
 	function checkRoute(url) {
-		if (ROUTE_PATTERN === '*' || url.includes(ROUTE_PATTERN)) {
+		if (ALLOWED_ROUTES.some(p => matchRoute(url, p))) {
 			isRouteActive = true;
 			try {
 				const urlObj = new URL(url);
