@@ -1,11 +1,11 @@
 {
-	"hub_version": "3.3.3",
+	"hub_version": "3.3.13",
 	"plugins": [
 		{
 			"id": "ml_theme",
 			"name": "Tema Global do Hub",
 			"description": "Estilos globais, notificações e componentes UI padronizados para todos os plugins.",
-			"version": "1.0.2",
+			"version": "1.0.3",
 			"file": "ml_theme.js",
 			"required": true,
 			"run_when_outdated": true,
@@ -15,7 +15,7 @@
 			"id": "qr_printer",
 			"name": "QR Code Printer - Package ID",
 			"description": "Atalhos de Impressão: Alt+P imprime pelo sistema; Alt+I seleciona impressora local.",
-			"version": "2.3.1",
+			"version": "2.3.4",
 			"file": "qr_printer.js",
 			"required": false,
 			"icon": "🖨️"
@@ -24,7 +24,7 @@
 			"id": "mt_quick_nav",
 			"name": "Navegação Rápida (Teclado)",
 			"description": "Digite 11 números em qualquer lugar da tela ou cole (Ctrl+V) um ID para navegar instantaneamente.",
-			"version": "1.2.1",
+			"version": "1.2.2",
 			"file": "mt_quick_nav.js",
 			"required": false,
 			"icon": "⌨️"

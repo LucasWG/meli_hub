@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MELI HUB - Gerenciador de Scripts
 // @namespace    https://github.com/LucasRepML/meli_hub
-// @version      3.3.3
+// @version      3.3.13
 // @description  Hub profissional para plugins do repositório meli_hub (Estilo ML, Suporte SPA, CSP Bypass e Anti-Cache)
 // @author       LucasWG
 // @match        *://*/*
@@ -24,9 +24,9 @@
 	'use strict';
 
 	// ===== CONFIGURAÇÕES =====
-	const HUB_VERSION = '3.3.3';
-	// const REPO_RAW = 'http://127.0.0.1:5500/';
+	const HUB_VERSION = '3.3.13';
 	const REPO_RAW = 'https://raw.githubusercontent.com/LucasRepML/meli_hub/main/';
+	// const REPO_RAW = 'http://127.0.0.1:5500/';
 	const MANIFEST_URL = REPO_RAW + 'manifest.json';
 	const HUB_SCRIPT_URL = REPO_RAW + 'meli_hub.user.js';
 	const CACHE_PREFIX = 'plugin_cache_';
@@ -97,10 +97,20 @@
 		});
 	}
 
+	function gmGetJson(key, def) {
+		const raw = GM_getValue(key, null);
+		if (!raw) return def;
+		if (typeof raw === 'object') return raw;
+		try { return JSON.parse(raw); } catch (e) { return def; }
+	}
+	function gmSetJson(key, val) {
+		GM_setValue(key, JSON.stringify(val));
+	}
+
 	// ===== ESTADO GLOBAL =====
 	let manifestData = { hub_version: HUB_VERSION, plugins: [] };
-	let enabledPlugins = GM_getValue('enabledPlugins', {});
-	let pluginsMeta = GM_getValue('pluginsMeta', {});
+	let enabledPlugins = gmGetJson('enabledPlugins', {});
+	let pluginsMeta = gmGetJson('pluginsMeta', {});
 	let activeToasts = [];
 	let currentGreeting = '';
 	let isHubOutdated = false;
@@ -111,23 +121,27 @@
 		const container = document.getElementById('meli-toast-container');
 		if (!container) return;
 
-		const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+		const icons = {
+			success: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
+			error: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`,
+			info: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`
+		};
+
 		const toast = document.createElement('div');
 		toast.className = `meli-toast ${type}`;
-		toast.innerHTML = `<span class="meli-toast-icon">${icons[type] || '🔔'}</span><span>${message}</span>`;
+		toast.innerHTML = `
+			<div class="meli-toast-content">
+				<div class="meli-toast-icon">${icons[type] || icons.info}</div>
+				<div class="meli-toast-message">${message}</div>
+				<button class="meli-toast-close" title="Fechar">✕</button>
+			</div>
+			<div class="meli-toast-progress">
+				<div class="meli-toast-progress-bar" style="animation-duration: ${duration}ms;"></div>
+			</div>
+		`;
 
-		container.appendChild(toast);
-		activeToasts.push(toast);
-
-		// Limita a quantidade de toasts na tela
-		if (activeToasts.length > MAX_TOASTS) {
-			const oldestToast = activeToasts.shift();
-			oldestToast.classList.add('hiding');
-			setTimeout(() => { if (oldestToast.parentNode) oldestToast.remove(); }, 300);
-		}
-
-		setTimeout(() => {
-			if (toast.parentNode && !toast.classList.contains('hiding')) {
+		const hideToast = () => {
+			if (!toast.classList.contains('hiding')) {
 				toast.classList.add('hiding');
 				setTimeout(() => {
 					if (toast.parentNode) toast.remove();
@@ -135,8 +149,25 @@
 					if (index > -1) activeToasts.splice(index, 1);
 				}, 300);
 			}
-		}, duration);
+		};
+
+		const closeBtn = toast.querySelector('.meli-toast-close');
+		if (closeBtn) closeBtn.addEventListener('click', hideToast);
+
+		container.appendChild(toast);
+		activeToasts.push(toast);
+
+		if (activeToasts.length > MAX_TOASTS) {
+			const oldestToast = activeToasts.shift();
+			oldestToast.classList.add('hiding');
+			setTimeout(() => { if (oldestToast.parentNode) oldestToast.remove(); }, 300);
+		}
+
+		setTimeout(hideToast, duration);
 	}
+
+	unsafeWindow.MeliHub = unsafeWindow.MeliHub || {};
+	unsafeWindow.MeliHub.showToast = showToast;
 
 	function createToastContainer() {
 		if (!document.getElementById('meli-toast-container')) {
@@ -234,14 +265,14 @@
 	}
 
 	function saveMeta(pluginId, version) {
-		const meta = GM_getValue(getMetaKey(pluginId), {});
+		const meta = gmGetJson(getMetaKey(pluginId), {});
 		meta.lastUpdated = Date.now();
 		meta.version = version;
-		GM_setValue(getMetaKey(pluginId), meta);
+		gmSetJson(getMetaKey(pluginId), meta);
 		pluginsMeta[pluginId] = meta;
 	}
 
-	function getMeta(pluginId) { return GM_getValue(getMetaKey(pluginId), null); }
+	function getMeta(pluginId) { return gmGetJson(getMetaKey(pluginId), null); }
 
 	async function fetchAndCachePlugin(plugin, onProgress) {
 		const path = plugin.file.includes('/') ? plugin.file : 'scripts/' + plugin.file;
@@ -398,7 +429,10 @@
 			const metaB = getMeta(idB);
 			const timeA = metaA && metaA.lastUpdated ? metaA.lastUpdated : 0;
 			const timeB = metaB && metaB.lastUpdated ? metaB.lastUpdated : 0;
-			return timeB - timeA;
+			if (timeB !== timeA) return timeB - timeA;
+			const enabledA = !!enabledPlugins[idA];
+			const enabledB = !!enabledPlugins[idB];
+			return (enabledB === enabledA) ? 0 : (enabledA ? -1 : 1);
 		});
 
 		items.forEach(item => listContainer.appendChild(item));
@@ -441,7 +475,10 @@
 			const metaB = getMeta(b.id);
 			const timeA = metaA && metaA.lastUpdated ? metaA.lastUpdated : 0;
 			const timeB = metaB && metaB.lastUpdated ? metaB.lastUpdated : 0;
-			return timeB - timeA;
+			if (timeB !== timeA) return timeB - timeA;
+			const enabledA = !!enabledPlugins[a.id];
+			const enabledB = !!enabledPlugins[b.id];
+			return (enabledB === enabledA) ? 0 : (enabledA ? -1 : 1);
 		});
 
 		const activeCount = optionalPlugins.filter(p => enabledPlugins[p.id]).length;
@@ -484,10 +521,16 @@
 				`;
 
 			const checkbox = item.querySelector('input[type=checkbox]');
-			checkbox.addEventListener('change', async function () {
+			checkbox.addEventListener('change', async function (e) {
+				if (isHubOutdated && !plugin.run_when_outdated) {
+					e.preventDefault();
+					this.checked = !this.checked;
+					showToast('Plugin bloqueado até a atualização do Hub.', 'error');
+					return;
+				}
 				const pluginId = this.dataset.pluginId;
 				enabledPlugins[pluginId] = this.checked;
-				GM_setValue('enabledPlugins', enabledPlugins);
+				gmSetJson('enabledPlugins', enabledPlugins);
 
 				if (this.checked) {
 					const pluginData = manifestData.plugins.find(p => p.id === pluginId);
@@ -517,19 +560,81 @@
 		const subtitle = modal.querySelector('.meli-hub-subtitle');
 		if (subtitle) {
 			const displayGreeting = currentGreeting || getRandomGreeting(getUserName());
+
+			const savedState = gmGetJson('savedEnabledPlugins', null);
+			const btnState = isHubOutdated ? 'disabled style="opacity: 0.5; cursor: not-allowed; padding: 4px 10px; border-radius: 4px; border: 1px solid var(--ml-border); background: var(--ml-white); font-size: 13px; color: var(--ml-text-main);"' : 'style="padding: 4px 10px; border-radius: 4px; border: 1px solid var(--ml-border); background: var(--ml-white); cursor: pointer; font-size: 13px; color: var(--ml-text-main); transition: all 0.2s;"';
+			const btnStateRestore = isHubOutdated ? 'disabled style="opacity: 0.5; cursor: not-allowed; padding: 4px 10px; border-radius: 4px; border: 1px solid var(--ml-blue); background: rgba(52,131,250,0.1); font-size: 13px; color: var(--ml-blue); font-weight: 600;"' : 'style="padding: 4px 10px; border-radius: 4px; border: 1px solid var(--ml-blue); background: rgba(52,131,250,0.1); cursor: pointer; font-size: 13px; color: var(--ml-blue); font-weight: 600; transition: all 0.2s;"';
+
+			let toggleBtnHtml = '';
+			if (activeCount > 0) {
+				toggleBtnHtml = `<button id="meli-hub-toggle-all" class="action-btn" ${btnState}>Desativar Todos</button>`;
+			} else if (savedState && Object.keys(savedState).length > 0) {
+				toggleBtnHtml = `<button id="meli-hub-toggle-all" class="action-btn" ${btnStateRestore}>Restaurar Ativos</button>`;
+			}
+
 			subtitle.innerHTML = `
 					<span>${displayGreeting}</span>
-					<strong>${activeCount} ativos</strong>
+					<div style="display: flex; gap: 12px; align-items: center;">
+						${toggleBtnHtml}
+						<strong>${activeCount} ativos</strong>
+					</div>
 				`;
+
+			const toggleBtn = subtitle.querySelector('#meli-hub-toggle-all');
+			if (toggleBtn) {
+				toggleBtn.addEventListener('click', async () => {
+					if (isHubOutdated) return;
+
+					if (activeCount > 0) {
+						gmSetJson('savedEnabledPlugins', enabledPlugins);
+						optionalPlugins.forEach(p => {
+							if (enabledPlugins[p.id]) {
+								enabledPlugins[p.id] = false;
+								const scriptEl = document.getElementById('meli-plugin-' + p.id);
+								if (scriptEl) scriptEl.remove();
+								window.dispatchEvent(new CustomEvent('meli-hub:plugin-disabled', { detail: { pluginId: p.id } }));
+							}
+						});
+						gmSetJson('enabledPlugins', enabledPlugins);
+						showToast('Todos os plugins foram desativados', 'info');
+					} else {
+						const stateToRestore = gmGetJson('savedEnabledPlugins', {});
+						for (const p of optionalPlugins) {
+							if (stateToRestore[p.id]) {
+								enabledPlugins[p.id] = true;
+								try {
+									await ensurePluginReady(p);
+									const cached = getCachedPlugin(p.id);
+									if (cached && cached.code) executePlugin(cached.code, p.id);
+								} catch (err) { }
+							}
+						}
+						gmSetJson('enabledPlugins', enabledPlugins);
+						gmSetJson('savedEnabledPlugins', null);
+						showToast('Plugins restaurados com sucesso', 'success');
+					}
+					renderModal();
+				});
+			}
 		}
 
 		// Atualiza botões do footer se houver atualização pendente para o Hub
 		const updateBtn = modal.querySelector('#meli-hub-update-hub');
 		const footer = modal.querySelector('#meli-hub-footer');
+		const headerTitle = modal.querySelector('.meli-hub-header h2');
 
-		if (updateBtn && footer) {
+		if (updateBtn && footer && headerTitle) {
 			const hasHubUpdate = compareVersions(manifestData.hub_version || HUB_VERSION, HUB_VERSION) > 0;
 			footer.style.display = hasHubUpdate ? 'flex' : 'none';
+
+			const versionHtml = hasHubUpdate
+				? `<span class="meli-hub-version old-version">v${HUB_VERSION}</span>
+				   <span class="meli-hub-version new-version">v${manifestData.hub_version}</span>`
+				: `<span class="meli-hub-version">v${HUB_VERSION}</span>`;
+			headerTitle.innerHTML = `
+				<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 12l10 5 10-5"></path><path d="M2 17l10 5 10-5"></path></svg>
+				MELI HUB ${versionHtml}
+			`;
 		}
 	}
 
@@ -557,6 +662,13 @@
 			// Auto check for plugin updates when modal opens
 			fetchManifest().then(data => {
 				manifestData = data;
+
+				const hasHubUpdate = compareVersions(manifestData.hub_version || HUB_VERSION, HUB_VERSION) > 0;
+				if (hasHubUpdate && !isHubOutdated) {
+					isHubOutdated = true;
+					showToast('Atualização obrigatória do MELI HUB disponível!', 'info');
+				}
+
 				renderModal();
 				autoUpdateOutdatedPlugins();
 			});
@@ -618,23 +730,30 @@
 
 		// Eventos dos botões do footer
 		modal.querySelector('#meli-hub-update-hub').addEventListener('click', function () {
-			showToast('Baixando nova versão do MELI HUB...', 'info');
+			showToast('Instale a atualização na nova aba e recarregue a página.', 'info', 6000);
 			GM_openInTab(HUB_SCRIPT_URL + '?t=' + Date.now(), { active: true });
 		});
 	}
 
-	// ===== MANIFEST =====
 	async function fetchManifest() {
 		try {
 			const responseText = await gmFetch(MANIFEST_URL);
 			const data = JSON.parse(responseText);
+
+			let finalData = data;
 			// Compatibilidade com manifest antigo (array) para novo (objeto)
 			if (Array.isArray(data)) {
-				return { hub_version: HUB_VERSION, plugins: data };
+				finalData = { hub_version: HUB_VERSION, plugins: data };
 			}
-			return data;
+			gmSetJson('cached_manifest', finalData);
+			return finalData;
 		} catch (err) {
 			console.error('[MELI-HUB] Erro ao buscar manifest:', err);
+			const cached = gmGetJson('cached_manifest', null);
+			if (cached && cached.plugins) {
+				console.warn('[MELI-HUB] Usando backup do manifest local.');
+				return cached;
+			}
 			return { hub_version: HUB_VERSION, plugins: [] };
 		}
 	}
@@ -647,6 +766,15 @@
 			GM_addValueChangeListener('meliHubForceReload', (key, oldValue, newValue, remote) => {
 				if (remote) window.location.reload();
 			});
+			GM_addValueChangeListener('installed_hub_version', (key, oldValue, newValue, remote) => {
+				if (remote) {
+					try {
+						const parsed = JSON.parse(newValue);
+						if (parsed && parsed !== HUB_VERSION) window.location.reload();
+					} catch (e) { }
+				}
+			});
+			gmSetJson('installed_hub_version', HUB_VERSION);
 
 			injectRouteInterceptor();
 			buildUI();
@@ -659,9 +787,9 @@
 					const userName = await getAsyncUserName();
 					openModal();
 					showToast(getRandomGreeting(userName), 'success', 6000);
-					updateAllEnabledPlugins(false).then(() => {
-						renderModal();
-					});
+					// updateAllEnabledPlugins(false).then(() => {
+					// 	renderModal();
+					// });
 					GM_setValue('firstRunDone', true);
 				}, 500);
 			} else {

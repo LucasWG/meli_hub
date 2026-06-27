@@ -1,5 +1,5 @@
 (function () {
-	// Versão: v1.0.2
+	// Versão: v1.0.4
 	'use strict';
 
 	if (window.MeliThemeInit) return;
@@ -29,50 +29,92 @@
 		#meli-toast-container {
 			position: fixed;
 			top: 24px;
-			left: 50%;
-			transform: translateX(-50%);
+			right: 24px;
+			left: auto;
+			transform: none;
 			z-index: 1000001;
 			display: flex;
 			flex-direction: column;
 			gap: 12px;
 			pointer-events: none;
-			align-items: center;
+			align-items: flex-end;
 		}
 		.meli-toast {
 			background: var(--ml-white);
 			color: var(--ml-text-main);
-			border-left: 5px solid var(--ml-blue);
-			padding: 16px 24px;
-			border-radius: 12px;
+			border-radius: 8px;
 			box-shadow: var(--ml-shadow-lg);
 			font-family: var(--ml-font);
-			font-size: 15px;
-			font-weight: 500;
-			min-width: 300px;
-			max-width: 450px;
+			width: 340px;
 			display: flex;
-			align-items: center;
-			gap: 14px;
+			flex-direction: column;
+			overflow: hidden;
 			animation: meli-slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 			transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 			pointer-events: auto;
+			border: 1px solid rgba(0,0,0,0.06);
 		}
-		.meli-toast.success { border-left-color: var(--ml-green); }
-		.meli-toast.error   { border-left-color: var(--ml-red); }
-		.meli-toast.info    { border-left-color: var(--ml-blue); }
-		.meli-toast-icon { font-size: 22px; flex-shrink: 0; }
+		.meli-toast-content {
+			display: flex;
+			align-items: center;
+			padding: 16px;
+			gap: 14px;
+		}
+		.meli-toast-icon {
+			width: 22px; height: 22px;
+			flex-shrink: 0;
+			display: flex; align-items: center; justify-content: center;
+		}
+		.meli-toast-icon svg { width: 100%; height: 100%; }
+		.meli-toast.success .meli-toast-icon { color: var(--ml-green); }
+		.meli-toast.error .meli-toast-icon { color: var(--ml-red); }
+		.meli-toast.info .meli-toast-icon { color: var(--ml-blue); }
+		
+		.meli-toast-message {
+			flex: 1;
+			font-size: 14px;
+			line-height: 1.4;
+			font-weight: 500;
+		}
+		.meli-toast-close {
+			background: none; border: none; font-size: 16px; color: var(--ml-text-light);
+			cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center;
+			transition: all 0.2s; width: 26px; height: 26px; border-radius: 6px;
+			margin-left: -4px; margin-right: -4px; font-weight: bold;
+		}
+		.meli-toast-close:hover { color: var(--ml-text-main); background: rgba(0,0,0,0.06); }
+
+		.meli-toast-progress {
+			height: 4px;
+			width: 100%;
+			background: rgba(0,0,0,0.04);
+		}
+		.meli-toast-progress-bar {
+			height: 100%;
+			width: 100%;
+			transform-origin: left;
+			animation: meli-progress linear forwards;
+		}
+		.meli-toast.success .meli-toast-progress-bar { background: var(--ml-green); }
+		.meli-toast.error .meli-toast-progress-bar { background: var(--ml-red); }
+		.meli-toast.info .meli-toast-progress-bar { background: var(--ml-blue); }
+
+		@keyframes meli-progress {
+			from { transform: scaleX(1); }
+			to { transform: scaleX(0); }
+		}
 
 		.meli-toast.hiding {
 			animation: meli-slideOutUp 0.3s ease forwards;
 		}
 
 		@keyframes meli-slideDown {
-			from { opacity: 0; transform: translateY(-40px) scale(0.9); }
-			to { opacity: 1; transform: translateY(0) scale(1); }
+			from { opacity: 0; transform: translateX(40px) scale(0.95); }
+			to { opacity: 1; transform: translateX(0) scale(1); }
 		}
 		@keyframes meli-slideOutUp {
-			from { opacity: 1; transform: translateY(0) scale(1); }
-			to { opacity: 0; transform: translateY(-40px) scale(0.9); }
+			from { opacity: 1; transform: translateX(0) scale(1); }
+			to { opacity: 0; transform: translateX(40px) scale(0.95); }
 		}
 
 		/* ========== MODAL PROFISSIONAL ========== */

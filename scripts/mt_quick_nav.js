@@ -1,5 +1,4 @@
 (function () {
-	// Versão: v1.2.1
 	'use strict';
 
 	if (window.MeliToolsQuickNavInit) return;
@@ -15,7 +14,7 @@
 		init: function () {
 			this.injectCSS();
 			this.createDisplay();
-			
+
 			// Lida com cliques/teclado
 			this._keyHandler = this.handleKey.bind(this);
 			this._pasteHandler = this.handlePaste.bind(this);
@@ -23,7 +22,7 @@
 			document.addEventListener('paste', this._pasteHandler);
 
 			this.checkRoute(location.href);
-			
+
 			// Evento nativo do MELI HUB para mudanças de SPA
 			this._routeHandler = (e) => this.checkRoute(e.detail.url);
 			window.addEventListener('meli-hub:route-change', this._routeHandler);

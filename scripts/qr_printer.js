@@ -9,8 +9,7 @@
 
 	const LS_KEY = 'qrprinter_selected_printer';
 	const ALLOWED_ROUTES = [
-		'*'
-		//'*/logistics/package-management/package/*'
+		'*/logistics/package-management/package/*'
 	];
 
 	// =========================================================================
