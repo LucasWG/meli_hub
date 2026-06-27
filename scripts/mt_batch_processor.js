@@ -1,5 +1,5 @@
 (function () {
-	// Versão: v1.1.1
+	// Versão: v1.2.0
 	'use strict';
 
 	if (window.MeliToolsBatchInit) return;
@@ -86,19 +86,19 @@
 		injectCSS: function () {
 			const style = document.createElement('style');
 			style.textContent = `
-                .mt-modal-overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.6); backdrop-filter: blur(4px); z-index: 9999999; display: flex; align-items: center; justify-content: center; font-family: sans-serif; }
-                .mt-modal-box { background: #fff; width: 90%; max-width: 600px; border-radius: 16px; box-shadow: 0 25px 50px rgba(0,0,0,0.25); border: 1px solid #e5e7eb; overflow: hidden; }
-                .mt-modal-header { padding: 20px 24px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
-                .mt-modal-header h2 { margin: 0; font-size: 20px; font-weight: 600; color: #111827; }
-                .mt-modal-close { background: none; border: none; font-size: 28px; cursor: pointer; color: #9ca3af; line-height: 1; }
-                .mt-modal-close:hover { color: #111827; }
+                .mt-modal-overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.6); backdrop-filter: blur(4px); z-index: 9999999; display: flex; align-items: center; justify-content: center; font-family: var(--ml-font); }
+                .mt-modal-box { background: var(--ml-white); width: 90%; max-width: 600px; border-radius: 16px; box-shadow: var(--ml-shadow-lg); border: 1px solid var(--ml-border); overflow: hidden; }
+                .mt-modal-header { padding: 20px 24px; background: var(--ml-bg); border-bottom: 1px solid var(--ml-border); display: flex; justify-content: space-between; align-items: center; }
+                .mt-modal-header h2 { margin: 0; font-size: 20px; font-weight: 600; color: var(--ml-text-main); }
+                .mt-modal-close { background: none; border: none; font-size: 28px; cursor: pointer; color: var(--ml-text-light); line-height: 1; }
+                .mt-modal-close:hover { color: var(--ml-text-main); }
                 .mt-modal-body { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
-                .mt-textarea { width: 100%; height: 160px; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-family: monospace; resize: vertical; box-sizing: border-box; font-size: 14px; }
-                .mt-textarea:focus { border-color: #2563eb; outline: none; }
-                .mt-select { width: 100%; padding: 14px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 15px; background: #fff; }
-                .mt-btn-submit { width: 100%; padding: 16px; border: none; border-radius: 8px; background: #2563eb; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-                .mt-btn-submit:hover { background: #1d4ed8; }
-                .mt-progress-hud { position: fixed; bottom: 24px; right: 24px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 9999999; width: 320px; font-family: sans-serif; border: 1px solid #e5e7eb; }
+                .mt-textarea { width: 100%; height: 160px; padding: 12px; border: 2px solid var(--ml-border); border-radius: 8px; font-family: monospace; resize: vertical; box-sizing: border-box; font-size: 14px; }
+                .mt-textarea:focus { border-color: var(--ml-blue); outline: none; }
+                .mt-select { width: 100%; padding: 14px; border: 2px solid var(--ml-border); border-radius: 8px; font-size: 15px; background: var(--ml-white); }
+                .mt-btn-submit { width: 100%; padding: 16px; border: none; border-radius: 8px; background: var(--ml-blue); color: var(--ml-white); font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+                .mt-btn-submit:hover { background: var(--ml-blue-hover); }
+                .mt-progress-hud { position: fixed; bottom: 24px; right: 24px; background: var(--ml-white); padding: 20px; border-radius: 12px; box-shadow: var(--ml-shadow-lg); z-index: 9999999; width: 320px; font-family: var(--ml-font); border: 1px solid var(--ml-border); }
                 .mt-stealth-active .mt-modal-overlay, .mt-stealth-active .mt-progress-hud { display: none !important; }
             `;
 			document.head.appendChild(style);
@@ -123,11 +123,11 @@
                     </div>
                     <div class="mt-modal-body">
                         <div>
-                            <label style="display:block; font-weight:600; color:#374151; margin-bottom:8px;">IDs dos Pacotes (um por linha)</label>
+                            <label style="display:block; font-weight:600; color:var(--ml-text-muted); margin-bottom:8px;">IDs dos Pacotes (um por linha)</label>
                             <textarea id="mt-batch-ids" class="mt-textarea" placeholder="Ex:&#10;46728965867&#10;46728965868"></textarea>
                         </div>
                         <div>
-                            <label style="display:block; font-weight:600; color:#374151; margin-bottom:8px;">Ação Desejada</label>
+                            <label style="display:block; font-weight:600; color:var(--ml-text-muted); margin-bottom:8px;">Ação Desejada</label>
                             <select id="mt-batch-status" class="mt-select">
                                 <option value="VERIFY">🔍 APENAS VERIFICAR STATUS (Rápido/Background)</option>
                                 <optgroup label="Forçar Alteração de Status:">

@@ -1,5 +1,5 @@
 (function () {
-	// Versão: v1.1.1
+	// Versão: v1.2.0
 	'use strict';
 
 	if (window.MeliToolsQuickNavInit) return;
@@ -73,10 +73,10 @@
 		injectCSS: function () {
 			const style = document.createElement('style');
 			style.textContent = `
-                #mt-qn-display { position: fixed; top: 80px; right: 24px; z-index: 999999; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); font-family: sans-serif; display: flex; flex-direction: column; gap: 8px; width: 240px; }
-                .mt-qn-title { font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
-                .mt-qn-id { font-size: 22px; font-family: monospace; font-weight: bold; color: #111827; letter-spacing: 2px; }
-                .mt-qn-cursor { animation: blink 1s infinite; color: #2563eb; }
+                #mt-qn-display { position: fixed; top: 80px; right: 24px; z-index: 999999; background: var(--ml-white); border: 1px solid var(--ml-border); border-radius: 12px; padding: 16px; box-shadow: var(--ml-shadow-md); font-family: var(--ml-font); display: flex; flex-direction: column; gap: 8px; width: 240px; }
+                .mt-qn-title { font-size: 12px; font-weight: 600; color: var(--ml-text-muted); text-transform: uppercase; letter-spacing: 1px; }
+                .mt-qn-id { font-size: 22px; font-family: monospace; font-weight: bold; color: var(--ml-text-main); letter-spacing: 2px; }
+                .mt-qn-cursor { animation: blink 1s infinite; color: var(--ml-blue); }
                 @keyframes blink { 50% { opacity: 0; } }
                 .mt-stealth-active #mt-qn-display { display: none !important; }
             `;
@@ -105,7 +105,7 @@
 			if (ids.length === 1) {
 				e.preventDefault();
 				this.display.style.display = 'flex';
-				this.display.innerHTML = `<div class="mt-qn-title">Navegação Rápida</div><div class="mt-qn-id">${ids[0]}</div><div style="font-size:12px; color:#10b981; font-weight:600;">Redirecionando... ✓</div>`;
+				this.display.innerHTML = `<div class="mt-qn-title">Navegação Rápida</div><div class="mt-qn-id">${ids[0]}</div><div style="font-size:12px; color:var(--ml-green); font-weight:600;">Redirecionando... ✓</div>`;
 				setTimeout(() => window.location.href = `https://envios.adminml.com/logistics/package-management/package/${ids[0]}`, 300);
 			}
 		},
@@ -126,7 +126,7 @@
 			this.display.innerHTML = `
                 <div class="mt-qn-title">Navegação Rápida</div>
                 <div class="mt-qn-id">${this.typedId}<span class="mt-qn-cursor">|</span></div>
-                <div style="font-size:12px; color:#6b7280;">Aguardando ${remaining} dígito${remaining !== 1 ? 's' : ''}...</div>
+                <div style="font-size:12px; color:var(--ml-text-muted);">Aguardando ${remaining} dígito${remaining !== 1 ? 's' : ''}...</div>
             `;
 
 			this.timeout = setTimeout(() => { this.typedId = ''; this.display.style.display = 'none'; }, 4000);
@@ -134,7 +134,7 @@
 			if (this.typedId.length === 11) {
 				const navId = this.typedId;
 				this.typedId = '';
-				this.display.innerHTML = `<div class="mt-qn-title">Navegação Rápida</div><div class="mt-qn-id">${navId}</div><div style="font-size:12px; color:#10b981; font-weight:600;">Redirecionando... ✓</div>`;
+				this.display.innerHTML = `<div class="mt-qn-title">Navegação Rápida</div><div class="mt-qn-id">${navId}</div><div style="font-size:12px; color:var(--ml-green); font-weight:600;">Redirecionando... ✓</div>`;
 				setTimeout(() => window.location.href = `https://envios.adminml.com/logistics/package-management/package/${navId}`, 200);
 			}
 		}

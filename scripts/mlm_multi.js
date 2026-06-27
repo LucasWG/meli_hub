@@ -1,6 +1,6 @@
 (function () {
 	// ===== MONITOR LAST MILE — MULTI ESTAÇÕES =====
-	// Versão: v1.3.3 (base: v11.19)
+	// Versão: v1.4.0 (base: v11.19)
 	// Guard clause: remove se já existir
 	if (document.getElementById('mlmp_multi')) {
 		document.getElementById('mlmp_multi').remove();
@@ -63,20 +63,20 @@
 
 	// ===== CORES E FONTES GLOBAIS =====
 	var S = {
-		bg: '#0a0e1a',
-		sf: '#111827',
-		sf2: '#1a2235',
-		bd: '#1e2d45',
-		ac: '#00d4ff',
-		ac2: '#ff6b35',
-		ok: '#00e676',
-		wn: '#ffab40',
-		er: '#ff5252',
-		tx: '#e2e8f0',
-		mt: '#64748b',
-		pu: '#a78bfa'
+		bg: 'var(--ml-bg)',
+		sf: 'var(--ml-white)',
+		sf2: 'var(--ml-bg)',
+		bd: 'var(--ml-border)',
+		ac: 'var(--ml-blue)',
+		ac2: 'var(--ml-yellow)',
+		ok: 'var(--ml-green)',
+		wn: '#ffab40', // warning color specific to this plugin if needed, or use yellow
+		er: 'var(--ml-red)',
+		tx: 'var(--ml-text-main)',
+		mt: 'var(--ml-text-muted)',
+		pu: 'var(--ml-blue-hover)'
 	};
-	var mn = "'IBM Plex Mono',monospace";
+	var mn = "var(--ml-font)";
 
 	// ===== CASCA EXTERNA: PAINEL MULTI-ESTAÇÃO =====
 	var outerPanel = document.createElement('div');

@@ -102,46 +102,11 @@
 	}
 
 	function showToast(message, type = 'info') {
-		const colors = { success: '#10B981', warn: '#F59E0B', error: '#EF4444', info: '#3B82F6' };
-		const icons = {
-			success: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10B981"><polyline points="20 6 9 17 4 12"></polyline></svg>`,
-			warn: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #F59E0B"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
-			error: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #EF4444"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`,
-			info: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #3B82F6"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`
-		};
-
-		document.getElementById('qrprinter-toast')?.remove();
-		const toast = document.createElement('div');
-		toast.id = 'qrprinter-toast';
-
-		toast.innerHTML = `
-			<div style="display: flex; align-items: center; gap: 14px;">
-				<div style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: ${colors[type]}20;">
-					${icons[type] || icons.info}
-				</div>
-				<span style="font-weight: 500;">${message}</span>
-			</div>
-		`;
-
-		Object.assign(toast.style, {
-			position: 'fixed', top: '24px', left: '50%', zIndex: '999999',
-			padding: '16px 24px', background: 'rgba(17, 24, 39, 0.95)',
-			backdropFilter: 'blur(10px)', color: '#F9FAFB', fontSize: '15px',
-			borderRadius: '16px', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
-			border: '1px solid rgba(255, 255, 255, 0.1)', opacity: '0',
-			transform: 'translate(-50%, -20px) scale(0.95)', transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-			fontFamily: 'system-ui, -apple-system, sans-serif'
-		});
-
-		document.body.appendChild(toast);
-		requestAnimationFrame(() => {
-			toast.style.opacity = '1'; toast.style.transform = 'translate(-50%, 0) scale(1)';
-		});
-
-		setTimeout(() => {
-			toast.style.opacity = '0'; toast.style.transform = 'translate(-50%, -20px) scale(0.95)';
-		}, 3200);
-		setTimeout(() => toast.remove(), 3600);
+		if (window.meliTheme && window.meliTheme.showToast) {
+			window.meliTheme.showToast(message, type, 3500);
+		} else {
+			console.log(`[QR Printer] ${type.toUpperCase()}: ${message}`);
+		}
 	}
 
 	// =========================================================================
@@ -346,20 +311,20 @@
 
 		const modal = document.createElement('div');
 		Object.assign(modal.style, {
-			background: '#FFFFFF', borderRadius: '20px', padding: '32px', width: '100%', maxWidth: '420px',
-			boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', fontFamily: 'system-ui, -apple-system, sans-serif',
+			background: 'var(--ml-white)', borderRadius: '20px', padding: '32px', width: '100%', maxWidth: '420px',
+			boxShadow: 'var(--ml-shadow-lg)', fontFamily: 'var(--ml-font)',
 			transform: 'scale(0.95) translateY(10px)', transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
 		});
 
 		modal.innerHTML = `
 			<div style="margin-bottom: 24px;">
-				<h2 style="font-size: 22px; font-weight: 600; color: #111827; margin: 0 0 8px 0;">Selecionar Impressora</h2>
-				<p style="font-size: 14px; color: #6B7280; margin: 0;">Escolha sua impressora padrão para agilizar os próximos envios.</p>
+				<h2 style="font-size: 22px; font-weight: 600; color: var(--ml-text-main); margin: 0 0 8px 0;">Selecionar Impressora</h2>
+				<p style="font-size: 14px; color: var(--ml-text-muted); margin: 0;">Escolha sua impressora padrão para agilizar os próximos envios.</p>
 			</div>
 			<style>
 				::-webkit-scrollbar { width: 6px; }
 				::-webkit-scrollbar-track { background: transparent; }
-				::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 10px; }
+				::-webkit-scrollbar-thumb { background: var(--ml-border); border-radius: 10px; }
 			</style>
 		`;
 
@@ -369,16 +334,16 @@
 		names.forEach(name => {
 			const isSel = name === saved;
 			const btn = document.createElement('button');
-			btn.innerHTML = `<span style="display:flex; align-items:center; gap:12px; color: ${isSel ? '#2563EB' : '#374151'};"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg> ${name}</span>`;
-			if (isSel) btn.innerHTML += `<div style="width:8px; height:8px; border-radius:50%; background-color:#3B82F6; box-shadow:0 0 6px #3B82F680;"></div>`;
+			btn.innerHTML = `<span style="display:flex; align-items:center; gap:12px; color: ${isSel ? 'var(--ml-blue)' : 'var(--ml-text-main)'};"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg> ${name}</span>`;
+			if (isSel) btn.innerHTML += `<div style="width:8px; height:8px; border-radius:50%; background-color:var(--ml-blue); box-shadow:0 0 6px var(--ml-blue);"></div>`;
 
 			Object.assign(btn.style, {
 				display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '16px',
-				backgroundColor: isSel ? '#EFF6FF' : '#F9FAFB', border: isSel ? '1px solid #BFDBFE' : '1px solid #E5E7EB',
+				backgroundColor: isSel ? 'rgba(52, 131, 250, 0.1)' : 'var(--ml-bg)', border: isSel ? '1px solid var(--ml-blue)' : '1px solid var(--ml-border)',
 				borderRadius: '14px', fontSize: '15px', fontWeight: isSel ? '600' : '500', cursor: 'pointer', transition: 'all 0.2s ease'
 			});
-			btn.onmouseenter = () => { if (!isSel) btn.style.backgroundColor = '#F3F4F6'; };
-			btn.onmouseleave = () => { if (!isSel) btn.style.backgroundColor = '#F9FAFB'; };
+			btn.onmouseenter = () => { if (!isSel) btn.style.backgroundColor = 'var(--ml-border)'; };
+			btn.onmouseleave = () => { if (!isSel) btn.style.backgroundColor = 'var(--ml-bg)'; };
 
 			btn.addEventListener('click', () => {
 				localStorage.setItem(LS_KEY, name);
@@ -391,11 +356,11 @@
 		const cancelBtn = document.createElement('button');
 		cancelBtn.textContent = 'Cancelar';
 		Object.assign(cancelBtn.style, {
-			display: 'block', width: '100%', padding: '14px', background: '#FFFFFF', border: '1px solid #E5E7EB',
-			borderRadius: '14px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', color: '#374151', transition: 'all 0.2s ease'
+			display: 'block', width: '100%', padding: '14px', background: 'var(--ml-white)', border: '1px solid var(--ml-border)',
+			borderRadius: '14px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', color: 'var(--ml-text-main)', transition: 'all 0.2s ease'
 		});
-		cancelBtn.onmouseenter = () => cancelBtn.style.backgroundColor = '#F9FAFB';
-		cancelBtn.onmouseleave = () => cancelBtn.style.backgroundColor = '#FFFFFF';
+		cancelBtn.onmouseenter = () => cancelBtn.style.backgroundColor = 'var(--ml-bg)';
+		cancelBtn.onmouseleave = () => cancelBtn.style.backgroundColor = 'var(--ml-white)';
 		cancelBtn.addEventListener('click', closeOverlay);
 
 		function closeOverlay() {
